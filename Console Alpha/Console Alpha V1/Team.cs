@@ -10,6 +10,8 @@ namespace Console_Alpha_V1
     {
         string teamName;
 
+        List<int> spacerList;
+
         Series enteredSeries;
         List<Entrant> crewList;
 
@@ -19,6 +21,35 @@ namespace Console_Alpha_V1
 
             enteredSeries = eS;
             crewList = cL;
+
+            SetSpacerList();
+        }
+
+        private void SetSpacerList()
+        {
+            spacerList = new List<int>();
+
+            foreach (Entrant newEntrant in crewList)
+            {
+                if (spacerList.Count() == 0)
+                {
+                    spacerList.Add(newEntrant.GetCarNo().Length);
+                    spacerList.Add(newEntrant.GetManufacturer().Length);
+                }
+
+                else
+                {
+                    if (newEntrant.GetCarNo().Length > spacerList[0])
+                    {
+                        spacerList[0] = newEntrant.GetCarNo().Length;
+                    }
+
+                    if (newEntrant.GetManufacturer().Length > spacerList[1])
+                    {
+                        spacerList[1] = newEntrant.GetManufacturer().Length;
+                    }
+                }
+            }
         }
 
         public string GetTeamName()
@@ -34,6 +65,11 @@ namespace Console_Alpha_V1
         public List<Entrant> GetTeamEntries()
         {
             return crewList;
+        }
+
+        public List<int> GetSpacerList()
+        {
+            return spacerList;
         }
     }
 }

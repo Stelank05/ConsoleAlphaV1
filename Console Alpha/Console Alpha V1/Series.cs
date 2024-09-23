@@ -4,13 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Data.OleDb;
 
 namespace Console_Alpha_V1
 {
     public class Series
     {
         string seriesName, folderName;
-        int maxCrews;
+        int maxCrews, calendarSpacer, classSpacer;
+
+        List<int> carModelSpacers;
 
         List<CarModel> modelList;
         List<Class> classList;
@@ -43,6 +46,8 @@ namespace Console_Alpha_V1
             bool fileRead = false;
             string[] classData = new string[1];// = File.ReadAllLines(classFile);
             string[] splitLine;
+
+            classSpacer = 0;
 
             while (!fileRead)
             {
@@ -77,6 +82,11 @@ namespace Console_Alpha_V1
                     newClass = new Class(splitLine[1], Convert.ToInt32(splitLine[5]), Convert.ToInt32(splitLine[6]), Convert.ToInt32(splitLine[8]), Convert.ToInt32(splitLine[9]), Convert.ToInt32(splitLine[10]),
                         Convert.ToInt32(splitLine[12]), Convert.ToInt32(splitLine[13]), Convert.ToInt32(splitLine[15]), Convert.ToInt32(splitLine[16]), Convert.ToInt32(splitLine[17]), i, platformList);
 
+                    if (newClass.GetClassName().Length > classSpacer)
+                    {
+                        classSpacer = newClass.GetClassName().Length;
+                    }
+
                     classList.Add(newClass);
                 }
             }
@@ -94,6 +104,8 @@ namespace Console_Alpha_V1
             bool fileRead = false;
             string[] modelData = new string[1];// = File.ReadAllLines(classFile);
             string[] splitLine;
+
+            carModelSpacers = new List<int>();
 
             while (!fileRead)
             {
@@ -118,6 +130,9 @@ namespace Console_Alpha_V1
                 enteredClass = GetEnteredClass(splitLine[2]);
 
                 newCarModel = new CarModel(splitLine[0], splitLine[1], splitLine[2], Convert.ToInt32(splitLine[3]), Convert.ToInt32(splitLine[4]), Convert.ToInt32(splitLine[5]), enteredClass);
+
+                UpdateCarModelSpacers(newCarModel);
+
                 modelList.Add(newCarModel);
             }
         }
@@ -134,6 +149,8 @@ namespace Console_Alpha_V1
 
                 Round newRound;
 
+                calendarSpacer = 0;
+
                 List<string> racingClasses;
 
                 for (int i = 1; i < calendarData.Length; i++)
@@ -148,6 +165,12 @@ namespace Console_Alpha_V1
                     }
 
                     newRound = new Round(roundData[0], Convert.ToInt32(roundData[1]), roundData[5], Convert.ToInt32(roundData[2]), Convert.ToInt32(roundData[3]), roundData[7], racingClasses);
+
+                    if (newRound.GetRoundName().Length > calendarSpacer)
+                    {
+                        calendarSpacer = newRound.GetRoundName().Length;
+                    }
+
                     calendar.Add(newRound);
                 }
             }
@@ -158,6 +181,28 @@ namespace Console_Alpha_V1
                 Console.WriteLine("Please Close '{0}'", calendarFile);
                 Console.ReadLine();
                 LoadCalendar();
+            }
+        }
+
+        private void UpdateCarModelSpacers(CarModel newModel)
+        {
+            if (carModelSpacers.Count() == 0)
+            {
+                carModelSpacers.Add(newModel.GetManufacturer().Length);
+                carModelSpacers.Add(newModel.GetModelName().Length);
+            }
+
+            else
+            {
+                if (newModel.GetManufacturer().Length > carModelSpacers[0])
+                {
+                    carModelSpacers[0] = newModel.GetManufacturer().Length;
+                }
+
+                if (newModel.GetModelName().Length > carModelSpacers[1])
+                {
+                    carModelSpacers[1] = newModel.GetModelName().Length;
+                }
             }
         }
 
@@ -228,6 +273,21 @@ namespace Console_Alpha_V1
             }
 
             return new CarModel();
+        }
+
+        public int GetCalendarSpacer()
+        {
+            return calendarSpacer;
+        }
+
+        public int GetClassSpacer()
+        {
+            return classSpacer;
+        }
+
+        public List<int> GetCarModelSpacers()
+        {
+            return carModelSpacers;
         }
     }
 }

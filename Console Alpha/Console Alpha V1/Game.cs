@@ -16,7 +16,7 @@ namespace Console_Alpha_V1
         Simulator gameSimulator;
         Team playerTeam;
 
-        List<int> pointsSystem;
+        List<int> pointsSystem, entrantSpacers, spacerList;
 
         List<Entrant> entryList;
         List<Series> seriesList;
@@ -161,11 +161,48 @@ namespace Console_Alpha_V1
 
             Entrant championshipWinner;
 
-            for (int classIndex = 0; classIndex < chosenSeries.GetClassList().Count(); classIndex++)
-            {
-                championshipWinner = GetChampionshipLeader(chosenSeries.GetClassList()[classIndex].GetClassName());
+            List<Class> classList = chosenSeries.GetClassList();
+            List<Entrant> championshipWinners = new List<Entrant>();
 
-                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", chosenSeries.GetClassList()[classIndex].GetClassName().PadRight(7, ' '), championshipWinner.GetCarNo().PadRight(4, ' '), championshipWinner.GetTeamName().PadRight(43, ' '), championshipWinner.GetManufacturer().PadRight(16, ' '), championshipWinner.GetPoints());
+            List<int> championshipSpacers = new List<int>();
+
+            foreach (Class currentClass in classList)
+            {
+                championshipWinner = GetChampionshipLeader(currentClass.GetClassName());
+
+                if (championshipSpacers.Count() == 0)
+                {
+                    championshipSpacers.Add(championshipWinner.GetCarNo().Length);
+                    championshipSpacers.Add(championshipWinner.GetTeamName().Length);
+                    championshipSpacers.Add(championshipWinner.GetManufacturer().Length);
+                }
+
+                else
+                {
+                    if (championshipWinner.GetCarNo().Length > championshipSpacers[0])
+                    {
+                        championshipSpacers[0] = championshipWinner.GetCarNo().Length;
+                    }
+
+                    if (championshipWinner.GetTeamName().Length > championshipSpacers[1])
+                    {
+                        championshipSpacers[1] = championshipWinner.GetTeamName().Length;
+                    }
+
+                    if (championshipWinner.GetManufacturer().Length > championshipSpacers[2])
+                    {
+                        championshipSpacers[2] = championshipWinner.GetManufacturer().Length;
+                    }
+                }
+
+                championshipWinners.Add(championshipWinner);
+            }
+
+            for (int classIndex = 0; classIndex < classList.Count(); classIndex++)
+            {
+                championshipWinner = championshipWinners[classIndex];
+
+                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", classList[classIndex].GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '), championshipWinner.GetCarNo().PadRight(championshipSpacers[0], ' '), championshipWinner.GetTeamName().PadRight(championshipSpacers[1], ' '), championshipWinner.GetManufacturer().PadRight(championshipSpacers[2], ' '), championshipWinner.GetPoints());
             }
 
             Console.ReadLine();
@@ -178,15 +215,28 @@ namespace Console_Alpha_V1
 
         private void SetupTeam()
         {
-            Console.Write("Please Enter Team Name: ");
-            string teamName = Console.ReadLine();
+            string teamName = "";
+            int minimumTeamNameLength = 5;
 
-            chosenSeries = seriesList[SelectSeries()];
+            while (teamName.Length < minimumTeamNameLength)
+            {
+                Console.Write("Please Enter Team Name: ");
+                teamName = Console.ReadLine();
+
+                if (teamName.Length < minimumTeamNameLength)
+                {
+                    Console.WriteLine("Team Name must be at least {0} Characters Long)", minimumTeamNameLength);
+                }
+            }
+
+            chosenSeries = seriesList[SelectSeries(true)];
 
             List<Entrant> crewList = CreateCrews(teamName, chosenSeries.GetMaxEnterableCrews());
 
             playerTeam = new Team(teamName, chosenSeries, crewList);
 
+            spacerList = playerTeam.GetSpacerList();
+            
             Console.WriteLine();
             Console.WriteLine("Team Information:");
             Console.WriteLine("Team Name: {0}", playerTeam.GetTeamName());
@@ -194,7 +244,7 @@ namespace Console_Alpha_V1
             
             for (int i = 0; i < playerTeam.GetTeamEntries().Count(); i++)
             {
-                Console.WriteLine("Crew {0}: {1} {2} - {3}", i + 1, playerTeam.GetTeamEntries()[i].GetCarNo().PadRight(4, ' '), playerTeam.GetTeamEntries()[i].GetCarModel().GetManufacturer(), playerTeam.GetTeamEntries()[i].GetClass().GetClassName());
+                Console.WriteLine("Crew {0}: {1} {2} - {3}", i + 1, playerTeam.GetTeamEntries()[i].GetCarNo().PadRight(spacerList[0], ' '), playerTeam.GetTeamEntries()[i].GetCarModel().GetManufacturer().PadRight(spacerList[1], ' '), playerTeam.GetTeamEntries()[i].GetClass().GetClassName());
             }
 
             Console.ReadLine();
@@ -205,14 +255,16 @@ namespace Console_Alpha_V1
 
         private void DisplaySeriesCalendar()
         {
-            Console.WriteLine("{0} Calendar:", chosenSeries.GetSeriesName());
+            Series displaySeries = seriesList[SelectSeries(false)];
+
+            Console.WriteLine("\n{0} Calendar:", displaySeries.GetSeriesName());
 
             Round outputRound;
             string roundLength = "";
 
-            for (int i = 0; i < chosenSeries.GetCalendar().Count(); i++)
+            for (int i = 0; i < displaySeries.GetCalendar().Count(); i++)
             {
-                outputRound = chosenSeries.GetCalendar()[i];
+                outputRound = displaySeries.GetCalendar()[i];
 
                 switch (outputRound.GetLengthType())
                 {
@@ -227,10 +279,41 @@ namespace Console_Alpha_V1
                         break;
                 }
 
-                Console.WriteLine("R{0}: - {1} - {2}", Convert.ToString(i + 1).PadRight(2, ' '), outputRound.GetRoundName().PadRight(22, ' '), roundLength);
+                Console.WriteLine("R{0}: {1} - {2}", Convert.ToString(i + 1).PadRight(2, ' '), outputRound.GetRoundName().PadRight(displaySeries.GetCalendarSpacer(), ' '), roundLength);
             }
 
             Console.ReadLine();
+        }
+
+        private void DisplayTeamEntrants()
+        {
+            string posString, classPosString;
+
+            Entrant currentEntrant;
+            List<Entrant> teamEntrants = new List<Entrant>();
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetTeamName() == playerTeam.GetTeamName())
+                {
+                    teamEntrants.Add(currentEntrant);
+                }
+            }
+
+            IndexSort(teamEntrants);
+
+            spacerList = playerTeam.GetSpacerList();
+
+            for (int i = 0; i < teamEntrants.Count(); i++)
+            {
+                currentEntrant = teamEntrants[i];
+
+                (posString, classPosString) = currentEntrant.GetCurrentPosition();
+
+                Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+            }
         }
 
         private void DisplayEntrants()
@@ -245,36 +328,7 @@ namespace Console_Alpha_V1
 
                 (posString, classPosString) = currentEntrant.GetCurrentPosition();
 
-                Console.WriteLine("{0} Overall / {1} In {6} - {2} {3} - {4} - {5}", posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(4, ' '), currentEntrant.GetTeamName().PadRight(43, ' '), currentEntrant.GetManufacturer().PadRight(16, ' '), currentEntrant.GetOVR(), currentEntrant.GetClass().GetClassName().PadRight(7, ' '));
-            }
-        }
-
-        private void DisplayTeamEntrants()
-        {
-            string posString, classPosString;
-
-            Entrant currentEntrant;
-            List<Entrant> teamEntrants = new List<Entrant>();
-
-            for (int i = 0; i < entryList.Count(); i++)
-            {
-                currentEntrant = entryList[i];
-                
-                if (currentEntrant.GetTeamName() == playerTeam.GetTeamName())
-                {
-                    teamEntrants.Add(currentEntrant);
-                }
-            }
-
-            IndexSort(teamEntrants);
-
-            for (int i = 0; i < teamEntrants.Count(); i++)
-            {
-                currentEntrant = teamEntrants[i];
-                
-                (posString, classPosString) = currentEntrant.GetCurrentPosition();
-
-                Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(4, ' '), currentEntrant.GetManufacturer(), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+                Console.WriteLine("{0} Overall / {1} In {6} - {2} {3} - {4} - {5}", posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetOVR(), currentEntrant.GetClass().GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '));
             }
         }
 
@@ -294,11 +348,13 @@ namespace Console_Alpha_V1
 
             IndexSort(teamEntrants);
 
+            spacerList = playerTeam.GetSpacerList();
+
             for (int i = 0; i < teamEntrants.Count(); i++)
             {
                 currentEntrant = teamEntrants[i];
 
-                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5}", i + 1, currentEntrant.GetCarNo().PadRight(4, ' '), currentEntrant.GetManufacturer().PadRight(16, ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
             }
         }
 
@@ -322,7 +378,7 @@ namespace Console_Alpha_V1
                     classIndex++;
                 }
 
-                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(4, ' '), currentEntrant.GetTeamName().PadRight(43, ' '), currentEntrant.GetManufacturer().PadRight(16, ' '), currentEntrant.GetPoints());
+                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetPoints());
                 classPosition++;
             }
         }
@@ -330,7 +386,7 @@ namespace Console_Alpha_V1
 
         // Crew Creation
 
-        private int SelectSeries()
+        private int SelectSeries(bool selectCalendar)
         {
             int selectedSeries;
 
@@ -338,19 +394,31 @@ namespace Console_Alpha_V1
 
             for (int i = 0; i < seriesList.Count(); i++)
             {
-                Console.WriteLine("{0} - {1}", (i + 1), seriesList[i].GetSeriesName());
+                Console.WriteLine("{0} - {1}", i + 1, seriesList[i].GetSeriesName());
+            }
+
+            if (selectCalendar)
+            {
+                Console.WriteLine("C - View Calendar");
             }
 
             Console.Write("Please Select a Series: ");
-            bool validSeries = int.TryParse(Console.ReadLine(), out selectedSeries);
+            string desiredSeries = Console.ReadLine().ToUpper();
+            bool validSeries = int.TryParse(desiredSeries, out selectedSeries);
 
             if (validSeries && selectedSeries > 0 && selectedSeries <= seriesList.Count())
             {
                 return selectedSeries - 1;
             }
 
+            else if (selectCalendar && desiredSeries == "C")
+            {
+                DisplaySeriesCalendar();
+                return SelectSeries(selectCalendar);
+            }
+
             Console.WriteLine("Invalid Series Selected\n");
-            return SelectSeries();
+            return SelectSeries(selectCalendar);
         }
 
         private List<Entrant> CreateCrews(string teamName, int maxCrews)
@@ -456,18 +524,39 @@ namespace Console_Alpha_V1
         {
             Class selectedClass = chosenSeries.GetClassList()[chosenClass];
 
+            int modelNumber = 1, platformSpacer = 0;
+
+            List<string> eligiblePlatforms = selectedClass.GetEligiblePlatforms();
             List<CarModel> modelList = chosenSeries.GetCarModelList(),
                 availableModels = new List<CarModel>();
-            int modelNumber = 1;
 
-            Console.WriteLine("\nEligible Car Models");
+            spacerList = chosenSeries.GetCarModelSpacers();
+
+            if (eligiblePlatforms.Count() > 1)
+            {
+                foreach (string eligiblePlatform in eligiblePlatforms)
+                {
+                    if (eligiblePlatform.Length > platformSpacer)
+                    {
+                        platformSpacer = eligiblePlatform.Length;
+                    }
+                }
+            }
+
+            else
+            {
+                platformSpacer = eligiblePlatforms[0].Length;
+            }
+
+            Console.WriteLine("\nEligible Car Models"); 
 
             for (int i = 0; i < modelList.Count(); i++)
             {
-                if (selectedClass.GetEligiblePlatforms().Contains(modelList[i].GetPlatform()))
+                if (eligiblePlatforms.Contains(modelList[i].GetPlatform()))
                 {
                     availableModels.Add(modelList[i]);
-                    Console.WriteLine("{0} - {1} - {2}", Convert.ToString(modelNumber).PadRight(2, ' '), modelList[i].GetPlatform().PadRight(4, ' '), modelList[i].GetModelName());
+
+                    Console.WriteLine("{0} - {1} - {2} - {3}", Convert.ToString(modelNumber).PadRight(2, ' '), modelList[i].GetPlatform().PadRight(platformSpacer, ' '), modelList[i].GetManufacturer().PadRight(spacerList[0], ' '), modelList[i].GetModelName().PadRight(spacerList[1], ' '));
                     modelNumber++;
                 }
             }
@@ -604,6 +693,8 @@ namespace Console_Alpha_V1
             string[] classEntrants, entrantData;
             int index = 0;
 
+            entrantSpacers = new List<int>();
+
             for (int classIndex = 0; classIndex < classes.Count(); classIndex++)
             {
                 filePath = Path.Combine(basePath, classes[classIndex] + ".csv");
@@ -622,6 +713,8 @@ namespace Console_Alpha_V1
                         newEntrant = new Entrant(entrantData[1], entrantData[2], Convert.ToInt32(entrantData[5]), Convert.ToInt32(entrantData[7]), Convert.ToInt32(entrantData[9]), index, carModel, enteredClass);
                         index++;
 
+                        UpdateEntrantSpacers(newEntrant);
+
                         entryList.Add(newEntrant);
                     }
                 }
@@ -634,9 +727,39 @@ namespace Console_Alpha_V1
                 newEntrant.SetIndex(index);
                 newEntrant.SetRound(currentRound);
 
+                UpdateEntrantSpacers(newEntrant);
+
                 entryList.Add(newEntrant);
 
                 index++;
+            }
+        }
+
+        private void UpdateEntrantSpacers(Entrant newEntrant)
+        {
+            if (entrantSpacers.Count() == 0)
+            {
+                entrantSpacers.Add(newEntrant.GetCarNo().Length);
+                entrantSpacers.Add(newEntrant.GetTeamName().Length);
+                entrantSpacers.Add(newEntrant.GetManufacturer().Length);
+            }
+
+            else
+            {
+                if (newEntrant.GetCarNo().Length > entrantSpacers[0])
+                {
+                    entrantSpacers[0] = newEntrant.GetCarNo().Length;
+                }
+
+                if (newEntrant.GetTeamName().Length > entrantSpacers[1])
+                {
+                    entrantSpacers[1] = newEntrant.GetTeamName().Length;
+                }
+
+                if (newEntrant.GetManufacturer().Length > entrantSpacers[2])
+                {
+                    entrantSpacers[2] = newEntrant.GetManufacturer().Length;
+                }
             }
         }
     
@@ -848,39 +971,6 @@ namespace Console_Alpha_V1
                 {
                     break;
                 }
-            }
-        }
-
-        private void SortStandingsOLD()
-        {
-            List<(int, int)> classLeaders = new List<(int, int)>();
-
-            for (int i = 0; i < chosenSeries.GetClassList().Count(); i++)
-            {
-                classLeaders.Add((-1, 0));
-            }
-
-            for (int i = 0; i < entryList.Count(); i++)
-            {
-                int newItem1 = classLeaders[entryList[i].GetClassIndex() - 1].Item1,
-                    newItem2 = classLeaders[entryList[i].GetClassIndex() - 1].Item2;
-
-                if (classLeaders[entryList[i].GetClassIndex() - 1].Item1 == -1)
-                {
-                    newItem1 = i;
-                }
-
-                if (classLeaders[entryList[i].GetClassIndex() - 1].Item2 < i)
-                {
-                    newItem2 = i;
-                }
-
-                classLeaders[entryList[i].GetClassIndex() - 1] = (newItem1, newItem2);
-            }
-
-            for (int i = 0; i < classLeaders.Count(); i++)
-            {
-                SortPoints(classLeaders[i].Item1, classLeaders[i].Item2);
             }
         }
 

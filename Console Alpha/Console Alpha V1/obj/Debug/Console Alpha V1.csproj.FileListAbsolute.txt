@@ -5,3 +5,10 @@ C:\Users\Steph\Documents\I want to make a game\Console Alpha\Console Alpha V1\ob
 C:\Users\Steph\Documents\I want to make a game\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.csproj.CoreCompileInputs.cache
 C:\Users\Steph\Documents\I want to make a game\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.exe
 C:\Users\Steph\Documents\I want to make a game\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.pdb
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\bin\Debug\Console Alpha V1.exe.config
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\bin\Debug\Console Alpha V1.exe
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\bin\Debug\Console Alpha V1.pdb
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.csproj.AssemblyReference.cache
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.csproj.CoreCompileInputs.cache
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.exe
+C:\Users\Steph\Documents\ConsoleAlphaV1-main\Console Alpha\Console Alpha V1\obj\Debug\Console Alpha V1.pdb
