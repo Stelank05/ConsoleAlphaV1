@@ -17,4 +17,9 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
   - Added Season Calendar Viewing
   - Added Spacers for Each Series, for neatened Display
 * V1.2
-  - Re-added Select Classes at each Event / Ability for Classes to miss rounds
+  - Fixed/Re-added Select Classes at each Event / Ability for Classes to miss rounds
+* V1.3
+  - Updated File Read + Write System with new FileHandler Class
+  - Added Results + Standings Saving
+    - Results Saved after Qualifying, Half Distance + Race Results
+    - Standings Saved after Each Round, and Season End
