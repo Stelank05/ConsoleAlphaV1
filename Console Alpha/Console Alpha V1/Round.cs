@@ -8,7 +8,7 @@ namespace Console_Alpha_V1
 {
     public class Round
     {
-        string roundName, lengthType, pointsSystem;
+        string roundName, lengthType, pointsSystem, folderName;
         int raceLength, incidentRange, dnfRate;
 
         List<string> classesLong, classesNamed;
@@ -53,6 +53,16 @@ namespace Console_Alpha_V1
         public string GetLengthType()
         {
             return lengthType;
+        }
+
+        public void SetFolder(string newFolder)
+        {
+            folderName = newFolder;
+        }
+
+        public string GetFolder()
+        {
+            return folderName;
         }
 
         public List<string> GetLongRacingClasses()

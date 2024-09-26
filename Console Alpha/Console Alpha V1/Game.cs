@@ -10,7 +10,7 @@ namespace Console_Alpha_V1
 {
     public class Game
     {
-        int racingCount;
+        int fileNumber = 1, racingCount;
 
         Random randomiser;
 
@@ -56,7 +56,7 @@ namespace Console_Alpha_V1
         public void PlayGame()
         {
             SetupTeam();
-            //DisplaySeriesCalendar();
+            FileHandler.SetGameSaveFolder(playerTeam);
 
             string roundLength = "";
 
@@ -71,6 +71,9 @@ namespace Console_Alpha_V1
                 }
 
                 gameSimulator.SetRound(currentRound);
+
+                FileHandler.CreateRoundFolder(roundNumber + 1, currentRound);
+                fileNumber = 1;
 
                 switch (currentRound.GetLengthType())
                 {
@@ -103,11 +106,24 @@ namespace Console_Alpha_V1
 
                 Console.WriteLine("Full {0} Qualifying Results:", currentRound.GetRoundName());
                 DisplayEntrants();
+                SaveResults("Qualifying Results");
                 Console.ReadLine();
 
                 gameSimulator.SetGrid(entryList, 10);
 
                 int raceLength = currentRound.GetRaceLength();
+
+                string halfDistanceString;
+
+                if (currentRound.GetLengthType() == "Laps")
+                {
+                    halfDistanceString = string.Format("{0} Laps", raceLength / 2);
+                }
+
+                else
+                {
+                    halfDistanceString = CommonData.GetDistancesList(currentRound.GetLengthType())[(raceLength / 2) - 1];
+                }
 
                 for (int stintNumber = 1; stintNumber <= raceLength; stintNumber++)
                 {
@@ -123,6 +139,7 @@ namespace Console_Alpha_V1
 
                         Console.WriteLine("{0} Running Order at Half Distance:", currentRound.GetRoundName());
                         DisplayEntrants();
+                        SaveResults(string.Format("Half Distance - {0}", halfDistanceString));
                         Console.ReadLine();
                     }
                 }
@@ -145,6 +162,7 @@ namespace Console_Alpha_V1
 
                 Console.WriteLine("Full {0} Race Results:", currentRound.GetRoundName());
                 DisplayEntrants();
+                SaveResults("Race Results");
                 Console.ReadLine();
 
                 AwardPoints();
@@ -157,6 +175,7 @@ namespace Console_Alpha_V1
 
                 Console.WriteLine("\nStandings after {0}:\n", currentRound.GetRoundName());
                 DisplayPoints();
+                SaveStandings();
                 Console.ReadLine();
             }
 
@@ -208,6 +227,7 @@ namespace Console_Alpha_V1
                 Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", classList[classIndex].GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '), championshipWinner.GetCarNo().PadRight(championshipSpacers[0], ' '), championshipWinner.GetTeamName().PadRight(championshipSpacers[1], ' '), championshipWinner.GetManufacturer().PadRight(championshipSpacers[2], ' '), championshipWinner.GetPoints());
             }
 
+            SaveFinalStandings();
             Console.ReadLine();
 
             Console.WriteLine("Thank you for playing the First Console Alpha of the (Hopefully Happening) Global Endurance Masters Game!");
@@ -708,7 +728,7 @@ namespace Console_Alpha_V1
             {
                 filePath = Path.Combine(basePath, "Class " + (classIndex + 1) + ".csv");
 
-                classEntrants = File.ReadAllLines(filePath);
+                classEntrants = FileHandler.ReadFile(filePath);
 
                 for (int i = 0; i < classEntrants.Length; i++)
                 {
@@ -944,6 +964,113 @@ namespace Console_Alpha_V1
 
                 currentEntrant.SetStandingsPosition(posString);
             }
+        }
+
+
+        // Results + Standings Saving
+
+        private void SaveResults(string stintName)
+        {
+            string filePath = Path.Combine(currentRound.GetFolder(), string.Format("{0} - {1}.csv", fileNumber, stintName)), writeString = "",
+                overallPosition, classPosition;
+
+            fileNumber++;
+
+            Entrant currentEntrant;
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetRacing())
+                {
+                    (overallPosition, classPosition) = currentEntrant.GetCurrentPosition();
+
+                    writeString += string.Format("{0},{1},{2},{3} {4},{5},,{6}", overallPosition, currentEntrant.GetClass().GetClassName(), classPosition, currentEntrant.GetCarNo(), currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetOVR()); ;
+
+                    if (i < entryList.Count() - 1)
+                    {
+                        writeString += "\n";
+                    }
+                }
+            }
+
+            FileHandler.WriteFile(writeString, filePath);
+        }
+
+        private void SaveStandings()
+        {
+            List<Class> classList = chosenSeries.GetClassList();
+
+            string folderPath = Path.Combine(currentRound.GetFolder(), "Post Race Standings"),
+                currentClassName = classList[0].GetClassName(),
+                fileName = Path.Combine(folderPath, string.Format("Class 1 - {0}.csv", currentClassName)),
+                writeString = "";
+
+            int classIndex = 1;
+
+            Entrant currentEntrant;
+
+            Directory.CreateDirectory(folderPath);
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+                
+                if (currentEntrant.GetClass().GetClassName() != currentClassName)
+                {
+                    FileHandler.WriteFile(writeString, fileName);
+                    
+                    currentClassName = classList[classIndex].GetClassName();
+                    classIndex++;
+                    
+                    writeString = "";
+                    
+                    fileName = Path.Combine(folderPath, string.Format("Class {0} - {1}.csv", classIndex, currentClassName));
+                }
+
+                writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
+                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints());
+            }
+
+            FileHandler.WriteFile(writeString, fileName);
+        }
+
+        private void SaveFinalStandings()
+        {
+            List<Class> classList = chosenSeries.GetClassList();
+
+            string folderPath = Path.Combine(CommonData.GetSaveFolder(), "Final Standings"),
+                currentClassName = classList[0].GetClassName(), writeString = "",
+                fileName = Path.Combine(folderPath, string.Format("Class 1 - {0}.csv", currentClassName));
+
+            int classIndex = 1;
+
+            Entrant currentEntrant;
+
+            Directory.CreateDirectory(folderPath);
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetClass().GetClassName() != currentClassName)
+                {
+                    FileHandler.WriteFile(writeString, fileName);
+
+                    currentClassName = classList[classIndex].GetClassName();
+                    classIndex++;
+
+                    writeString = "";
+
+                    fileName = Path.Combine(folderPath, string.Format("Class {0} - {1}.csv", classIndex, currentClassName));
+                }
+
+                writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
+                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints());
+            }
+
+            FileHandler.WriteFile(writeString, fileName);
         }
 
 

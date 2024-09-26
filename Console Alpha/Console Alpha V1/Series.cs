@@ -43,27 +43,10 @@ namespace Console_Alpha_V1
 
             string classFile = Path.Combine(CommonData.GetSetupPath(), folderName, "Class Setup.csv");
 
-            bool fileRead = false;
-            string[] classData = new string[1];// = File.ReadAllLines(classFile);
+            string[] classData = FileHandler.ReadFile(classFile);
             string[] splitLine;
 
             classSpacer = 0;
-
-            while (!fileRead)
-            {
-                try
-                {
-                    classData = File.ReadAllLines(classFile);
-                    fileRead = true;
-                }
-
-                catch
-                {
-                    Console.WriteLine("Please close File '{0}'", classFile);
-                    fileRead = false;
-                    Console.ReadLine();
-                }
-            }
 
             for (int i = 1; i < classData.Length; i++)
             {
@@ -101,27 +84,10 @@ namespace Console_Alpha_V1
 
             string carModelFile = Path.Combine(CommonData.GetSetupPath(), folderName, "Available Cars.csv");
 
-            bool fileRead = false;
-            string[] modelData = new string[1];// = File.ReadAllLines(classFile);
+            string[] modelData = FileHandler.ReadFile(carModelFile);
             string[] splitLine;
 
             carModelSpacers = new List<int>();
-
-            while (!fileRead)
-            {
-                try
-                {
-                    modelData = File.ReadAllLines(carModelFile);
-                    fileRead = true;
-                }
-
-                catch
-                {
-                    Console.WriteLine("Please close File '{0}'", carModelFile);
-                    fileRead = false;
-                    Console.ReadLine();
-                }
-            }
 
             for (int i = 1; i < modelData.Length; i++)
             {
@@ -143,44 +109,33 @@ namespace Console_Alpha_V1
 
             string calendarFile = Path.Combine(CommonData.GetSetupPath(), folderName, "Calendar.csv");
 
-            try
+            string[] calendarData = FileHandler.ReadFile(calendarFile), roundData;
+
+            Round newRound;
+
+            calendarSpacer = 0;
+
+            List<string> racingClasses;
+
+            for (int i = 1; i < calendarData.Length; i++)
             {
-                string[] calendarData = File.ReadAllLines(calendarFile), roundData;
+                roundData = calendarData[i].Split(',');
 
-                Round newRound;
+                racingClasses = new List<string>();
 
-                calendarSpacer = 0;
-
-                List<string> racingClasses;
-
-                for (int i = 1; i < calendarData.Length; i++)
+                for (int j = 9; j < roundData.Length; j++)
                 {
-                    roundData = calendarData[i].Split(',');
-
-                    racingClasses = new List<string>();
-
-                    for (int j = 9; j < roundData.Length; j++)
-                    {
-                        racingClasses.Add(roundData[j]);
-                    }
-
-                    newRound = new Round(roundData[0], Convert.ToInt32(roundData[1]), roundData[5], Convert.ToInt32(roundData[2]), Convert.ToInt32(roundData[3]), roundData[7], racingClasses, this);
-
-                    if (newRound.GetRoundName().Length > calendarSpacer)
-                    {
-                        calendarSpacer = newRound.GetRoundName().Length;
-                    }
-
-                    calendar.Add(newRound);
+                    racingClasses.Add(roundData[j]);
                 }
-            }
 
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception);
-                Console.WriteLine("Please Close '{0}'", calendarFile);
-                Console.ReadLine();
-                LoadCalendar();
+                newRound = new Round(roundData[0], Convert.ToInt32(roundData[1]), roundData[5], Convert.ToInt32(roundData[2]), Convert.ToInt32(roundData[3]), roundData[7], racingClasses, this);
+
+                if (newRound.GetRoundName().Length > calendarSpacer)
+                {
+                    calendarSpacer = newRound.GetRoundName().Length;
+                }
+
+                calendar.Add(newRound);
             }
         }
 

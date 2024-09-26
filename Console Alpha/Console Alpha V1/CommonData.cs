@@ -9,7 +9,8 @@ namespace Console_Alpha_V1
 {
     public static class CommonData
     {
-        static string mainFolder, setupFolder, seriesFile, entrantsFolder, distancesFolder, garageValuesFolder, pointsSystemFolder;
+        static string mainFolder, setupFolder, seriesFile, saveFolder,
+            entrantsFolder, distancesFolder, garageValuesFolder, pointsSystemFolder;
 
         static List<string> wecDistances = new List<string>(),
             imsaDistances = new List<string>(),
@@ -39,21 +40,21 @@ namespace Console_Alpha_V1
         {
             try
             {
-                string[] sWECDistances = File.ReadAllLines(Path.Combine(GetSetupPath(), distancesFolder, "WEC Distances.csv"));
+                string[] sWECDistances = FileHandler.ReadFile(Path.Combine(GetSetupPath(), distancesFolder, "WEC Distances.csv"));
 
                 foreach (string sWEC in sWECDistances)
                 {
                     wecDistances.Add(sWEC);
                 }
 
-                string[] sIMSADistances = File.ReadAllLines(Path.Combine(GetSetupPath(), distancesFolder, "IMSA Distances.csv"));
+                string[] sIMSADistances = FileHandler.ReadFile(Path.Combine(GetSetupPath(), distancesFolder, "IMSA Distances.csv"));
 
                 foreach (string sIMSA in sIMSADistances)
                 {
                     imsaDistances.Add(sIMSA);
                 }
 
-                string[] sLapDistances = File.ReadAllLines(Path.Combine(GetSetupPath(), distancesFolder, "Lap Distances.csv"));
+                string[] sLapDistances = FileHandler.ReadFile(Path.Combine(GetSetupPath(), distancesFolder, "Lap Distances.csv"));
 
                 foreach (string sLap in sLapDistances)
                 {
@@ -84,56 +85,47 @@ namespace Console_Alpha_V1
                 {
                     fileName = fileNames[j];
 
-                    try
+                    string[] data = FileHandler.ReadFile(Path.Combine(GetSetupPath(), garageValuesFolder, length, fileName));
+
+                    List<int> mungedData = new List<int>();
+
+                    foreach (string dataPiece in data)
                     {
-                        string[] data = File.ReadAllLines(Path.Combine(GetSetupPath(), garageValuesFolder, length, fileName));
+                        mungedData.Add(Convert.ToInt32(dataPiece.Split(',')[1]));
+                    }
 
-                        List<int> mungedData = new List<int>();
-
-                        foreach (string dataPiece in data)
+                    if (fileName.StartsWith("Enter"))
+                    {
+                        switch (length)
                         {
-                            mungedData.Add(Convert.ToInt32(dataPiece.Split(',')[1]));
-                        }
-
-                        if (fileName.StartsWith("Enter"))
-                        {
-                            switch (length)
-                            {
-                                case "WEC":
-                                    wec_EnterGarageValues = mungedData;
-                                    break;
-                                case "IMSA":
-                                    imsa_EnterGarageValues = mungedData;
-                                    break;
-                                case "Laps":
-                                    lap_EnterGarageValues = mungedData;
-                                    break;
-                            }
-                        }
-
-                        else
-                        {
-                            switch (length)
-                            {
-                                case "WEC":
-                                    wec_LeaveGarageValues = mungedData;
-                                    break;
-                                case "IMSA":
-                                    imsa_LeaveGarageValues = mungedData;
-                                    break;
-                                case "Laps":
-                                    lap_LeaveGarageValues = mungedData;
-                                    break;
-                            }
+                            case "WEC":
+                                wec_EnterGarageValues = mungedData;
+                                break;
+                            case "IMSA":
+                                imsa_EnterGarageValues = mungedData;
+                                break;
+                            case "Laps":
+                                lap_EnterGarageValues = mungedData;
+                                break;
                         }
                     }
 
-                    catch
+                    else
                     {
-                        Console.WriteLine("Please Close '" + Path.Combine("Garage Values", length, fileName) + ".csv'.");
-                        j--;
-                        Console.ReadLine();
+                        switch (length)
+                        {
+                            case "WEC":
+                                wec_LeaveGarageValues = mungedData;
+                                break;
+                            case "IMSA":
+                                imsa_LeaveGarageValues = mungedData;
+                                break;
+                            case "Laps":
+                                lap_LeaveGarageValues = mungedData;
+                                break;
+                        }
                     }
+                    
                 }
             }
         }
@@ -151,6 +143,16 @@ namespace Console_Alpha_V1
         public static string GetSetupPath()
         {
             return Path.Combine(mainFolder, setupFolder);
+        }
+
+        public static void SetSaveFolder(string newFolder)
+        {
+            saveFolder = newFolder;
+        }
+
+        public static string GetSaveFolder()
+        {
+            return saveFolder;
         }
 
         public static string GetSeriesFile()
