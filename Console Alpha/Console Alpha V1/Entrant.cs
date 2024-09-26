@@ -9,11 +9,11 @@ namespace Console_Alpha_V1
     public class Entrant
     {
         string carNo, teamName, manufacturer, currentPositionOverall, currentPositionClass, standingsPosition;
-        int mainOVR, baseOVR, stintRangeModifier,
+        int mainOVR, baseOVR, stintRangeModifier, isRacingIndex,
             reliability, dnfScore, baseReliability, baseDNFScore,
             lastStint, stintsInGarage, totalStintsInGarage, totalStaysInGarage,
             points, index, stintsSincePit = 0, totalStops;
-        bool inGarage = false, extendedGarageStay = false;
+        bool isRacing, inGarage = false, extendedGarageStay = false;
 
         CarModel carModel;
         Class memberClass;
@@ -76,6 +76,29 @@ namespace Console_Alpha_V1
             extendedGarageStay = false;
 
             //Console.WriteLine("{0} - {1}", carNo, mainOVR);
+        }
+
+        public void SetRacing(bool newRacing)
+        {
+            mainOVR = baseOVR;
+
+            isRacing = newRacing;
+            isRacingIndex = 1;
+
+            if (!newRacing)
+            {
+                isRacingIndex = 2;
+            }
+        }
+
+        public bool GetRacing()
+        {
+            return isRacing;
+        }
+
+        public int GetRacingIndex()
+        {
+            return isRacingIndex;
         }
 
         public void SetIndex(int newIndex)

@@ -164,7 +164,7 @@ namespace Console_Alpha_V1
                         racingClasses.Add(roundData[j]);
                     }
 
-                    newRound = new Round(roundData[0], Convert.ToInt32(roundData[1]), roundData[5], Convert.ToInt32(roundData[2]), Convert.ToInt32(roundData[3]), roundData[7], racingClasses);
+                    newRound = new Round(roundData[0], Convert.ToInt32(roundData[1]), roundData[5], Convert.ToInt32(roundData[2]), Convert.ToInt32(roundData[3]), roundData[7], racingClasses, this);
 
                     if (newRound.GetRoundName().Length > calendarSpacer)
                     {

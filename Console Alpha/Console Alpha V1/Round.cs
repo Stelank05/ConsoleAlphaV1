@@ -11,25 +11,37 @@ namespace Console_Alpha_V1
         string roundName, lengthType, pointsSystem;
         int raceLength, incidentRange, dnfRate;
 
-        List<string> classesLong = new List<string>();
+        List<string> classesLong, classesNamed;
 
-        public Round(string RN, int RL, string LT, int IR, int DR, string PS, List<string> RacingClasses)
+        Series memberSeries;
+
+        public Round(string rN, int rL, string lT, int iR, int dR, string pS, List<string> racingClasses, Series mS)
         {
-            roundName = RN;
-            raceLength = RL;
-            lengthType = LT;
-            incidentRange = IR;
-            dnfRate = DR;
-            pointsSystem = PS;
+            roundName = rN;
+            raceLength = rL;
+            lengthType = lT;
+            incidentRange = iR;
+            dnfRate = dR;
+            pointsSystem = pS;
 
-            LoadClasses(RacingClasses);
+            memberSeries = mS;
+
+            LoadClasses(racingClasses);
         }
 
-        public void LoadClasses(List<string> RacingClasses)
+        public void LoadClasses(List<string> racingClasses)
         {
-            for (int i = 0; i < RacingClasses.Count; i++)
+            classesLong = new List<string>();
+            classesNamed = new List<string>();
+
+            for (int i = 0; i < racingClasses.Count; i++)
             {
-                classesLong.Add(RacingClasses[i].Replace("C", "Class "));
+                if (racingClasses[i] != "")
+                {
+                    classesLong.Add(racingClasses[i].Replace("C", "Class "));
+
+                    classesNamed.Add(memberSeries.GetClassList()[Convert.ToInt32(racingClasses[i].Replace("C", "")) - 1].GetClassName());
+                }
             }
         }
 
@@ -46,6 +58,11 @@ namespace Console_Alpha_V1
         public List<string> GetLongRacingClasses()
         {
             return classesLong;
+        }
+
+        public List<string> GetNamedClasses()
+        {
+            return classesNamed;
         }
 
         public int GetRaceLength()

@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections;
 
 namespace Console_Alpha_V1
 {
     public class Game
     {
+        int racingCount;
+
         Random randomiser;
 
         Round currentRound;
@@ -89,7 +92,7 @@ namespace Console_Alpha_V1
 
                 for (int i = 0; i < 3; i++)
                 {
-                    gameSimulator.Qualifying(entryList, entryList.Count());
+                    gameSimulator.Qualifying(entryList, racingCount);
                 }
 
                 SetPositions();
@@ -108,7 +111,7 @@ namespace Console_Alpha_V1
 
                 for (int stintNumber = 1; stintNumber <= raceLength; stintNumber++)
                 {
-                    gameSimulator.Race(entryList, stintNumber);
+                    gameSimulator.Race(entryList, stintNumber, racingCount);
 
                     if (stintNumber == raceLength / 2)
                     {
@@ -126,13 +129,13 @@ namespace Console_Alpha_V1
 
                 for (int i = 0; i < entryList.Count(); i++)
                 {
-                    if (entryList[i].GetInGarage() && entryList[i].GetOVR() != 1)
+                    if (entryList[i].GetRacing() && entryList[i].GetInGarage() && entryList[i].GetOVR() != 1)
                     {
                         entryList[i].UpdateOVR(100);
                     }
                 }
 
-                gameSimulator.Sort(entryList, 0, entryList.Count());
+                gameSimulator.Sort(entryList, 0, racingCount);
 
                 SetPositions();
 
@@ -310,9 +313,12 @@ namespace Console_Alpha_V1
             {
                 currentEntrant = teamEntrants[i];
 
-                (posString, classPosString) = currentEntrant.GetCurrentPosition();
+                if (currentEntrant.GetRacing())
+                {
+                    (posString, classPosString) = currentEntrant.GetCurrentPosition();
 
-                Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+                    Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+                }
             }
         }
 
@@ -326,9 +332,12 @@ namespace Console_Alpha_V1
             {
                 currentEntrant = entryList[i];
 
-                (posString, classPosString) = currentEntrant.GetCurrentPosition();
+                if (currentEntrant.GetRacing())
+                {
+                    (posString, classPosString) = currentEntrant.GetCurrentPosition();
 
-                Console.WriteLine("{0} Overall / {1} In {6} - {2} {3} - {4} - {5}", posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetOVR(), currentEntrant.GetClass().GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '));
+                    Console.WriteLine("{0} Overall / {1} In {6} - {2} {3} - {4} - {5}", posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetOVR(), currentEntrant.GetClass().GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '));
+                }
             }
         }
 
@@ -680,7 +689,7 @@ namespace Console_Alpha_V1
 
         private void LoadEntryList()
         {
-            List<string> classes = currentRound.GetLongRacingClasses();
+            List<Class> classes = chosenSeries.GetClassList();
 
             entryList = new List<Entrant>();
 
@@ -697,7 +706,7 @@ namespace Console_Alpha_V1
 
             for (int classIndex = 0; classIndex < classes.Count(); classIndex++)
             {
-                filePath = Path.Combine(basePath, classes[classIndex] + ".csv");
+                filePath = Path.Combine(basePath, "Class " + (classIndex + 1) + ".csv");
 
                 classEntrants = File.ReadAllLines(filePath);
 
@@ -766,11 +775,25 @@ namespace Console_Alpha_V1
         private void SetEntryList()
         {
             IndexSort(entryList);
+            racingCount = 0;
 
             for (int i = 0; i < entryList.Count(); i++)
             {
                 entryList[i].SetRound(currentRound);
+
+                if (currentRound.GetNamedClasses().Contains(entryList[i].GetClass().GetClassName()))
+                {
+                    entryList[i].SetRacing(true);
+                    racingCount++;
+                }
+
+                else
+                {
+                    entryList[i].SetRacing(false);
+                }
             }
+
+            IsRacingSort(entryList);
         }
 
 
@@ -794,7 +817,7 @@ namespace Console_Alpha_V1
                     classPosition = 0;
                 }
 
-                if (classPosition < pointsSystem.Count() && entryList[i].GetOVR() > 100)
+                if (classPosition < pointsSystem.Count() && entryList[i].GetOVR() > 100 && entryList[i].GetRacing())
                 {
                     entryList[i].SetPoints(entryList[i].GetPoints() + pointsSystem[classPosition]);
                     classPosition++;
@@ -1003,6 +1026,31 @@ namespace Console_Alpha_V1
                 for (int j = start; j < end - i - 1; j++)
                 {
                     if (entryList[j].GetPoints() < entryList[j + 1].GetPoints())
+                    {
+                        swap = true;
+
+                        (entryList[j], entryList[j + 1]) = (entryList[j + 1], entryList[j]);
+                    }
+                }
+
+                if (!swap)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void IsRacingSort(List<Entrant> entryList)
+        {
+            bool swap;
+
+            for (int i = 0; i < entryList.Count() - 1; i++)
+            {
+                swap = false;
+
+                for (int j = 0; j < entryList.Count() - i - 1; j++)
+                {
+                    if (entryList[j].GetRacingIndex() > entryList[j + 1].GetRacingIndex())
                     {
                         swap = true;
 

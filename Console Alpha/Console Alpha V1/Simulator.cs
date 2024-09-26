@@ -27,12 +27,15 @@ namespace Console_Alpha_V1
 
             for (int i = 0; i < entryListCount; i++)
             {
-                stintScore = QualiStint(entryList[i]);
-
-                if (entryList[i].GetBaseOVR() + stintScore > entryList[i].GetOVR())
+                if (entryList[i].GetRacing())
                 {
-                    entryList[i].UpdateOVR(entryList[i].GetBaseOVR() + stintScore);
-                    entryList[i].SetLastStint(stintScore);
+                    stintScore = QualiStint(entryList[i]);
+
+                    if (entryList[i].GetBaseOVR() + stintScore > entryList[i].GetOVR())
+                    {
+                        entryList[i].UpdateOVR(entryList[i].GetBaseOVR() + stintScore);
+                        entryList[i].SetLastStint(stintScore);
+                    }
                 }
             }
 
@@ -106,13 +109,18 @@ namespace Console_Alpha_V1
             return stintScore;
         }
 
-        public void Race(List<Entrant> entryList, int stintNumber)
+        public void Race(List<Entrant> entryList, int stintNumber, int racingCount)
         {
             int stintScore, pitScore = 0;
 
             foreach (Entrant currentEntrant in entryList)
             {
                 if (currentEntrant.GetOVR() == 1)
+                {
+                    break;
+                }
+
+                else if (!currentEntrant.GetRacing())
                 {
                     break;
                 }
@@ -183,7 +191,7 @@ namespace Console_Alpha_V1
                 }
             }
 
-            Sort(entryList, 0, entryList.Count);
+            Sort(entryList, 0, racingCount);
         }
 
         public int RaceStint(Entrant entrantData, int stintNumber, bool leaveGarage)
