@@ -12,9 +12,9 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
 
 **Changelog**
 * V1
-* - Original Upload
+  - Original Upload
 * V1.1
-* - Added Season Calendar Viewing
+  - Added Season Calendar Viewing
   - Added Spacers for Each Series, for neatened Display
 * V1.2
-* - Re-added Select Classes at each Event / Ability for Classes to miss rounds
+  - Re-added Select Classes at each Event / Ability for Classes to miss rounds
