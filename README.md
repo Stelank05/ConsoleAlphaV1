@@ -23,3 +23,9 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
   - Added Results + Standings Saving
     - Results Saved after Qualifying, Half Distance + Race Results
     - Standings Saved after Each Round, and Season End
+* V1.4
+  - Added Ability to Complete Multiple Seasons
+  - Console Will now Clear before the Start of Each Season
+  - Results Folder Structure tweaked to include Season Folders within Team Folders
+  - Updated Repository Folder Structure
+    - Allows to Update only the Code or Setup Files, not having to Update Both
