@@ -9,8 +9,8 @@ namespace Console_Alpha_V1
     public class Entrant
     {
         string carNo, teamName, manufacturer, currentPositionOverall, currentPositionClass, standingsPosition;
-        int mainOVR, baseOVR, stintRangeModifier, isRacingIndex,
-            reliability, dnfScore, baseReliability, baseDNFScore,
+        int mainOVR, baseOVR, teamOVR, crewOVR, stintRangeModifier, isRacingIndex,
+            reliability, dnfScore, baseCrewReliability, baseReliability, baseDNFScore,
             lastStint, stintsInGarage, totalStintsInGarage, totalStaysInGarage,
             points, index, stintsSincePit = 0, totalStops;
         bool isRacing, inGarage = false, extendedGarageStay = false;
@@ -18,15 +18,19 @@ namespace Console_Alpha_V1
         CarModel carModel;
         Class memberClass;
 
-        public Entrant(string cN, string tN, int ovr, int srm, int r, int i, CarModel cM, Class mC)
+        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, int i, CarModel cM, Class mC)
         {
             carNo = cN;
             teamName = tN;
             manufacturer = cM.GetManufacturer();
 
-            mainOVR = ovr + cM.GetMainOVR();
-            baseOVR = ovr + cM.GetMainOVR();
-            
+            mainOVR = tOVR + cOVR + cM.GetMainOVR();
+            baseOVR = tOVR + cOVR + cM.GetMainOVR();
+
+            teamOVR = tOVR;
+            crewOVR = cOVR;
+
+            baseCrewReliability = r;
             baseReliability = r + cM.GetReliability() + mC.GetIRM();
             baseDNFScore = mC.GetDNFRM();
 
@@ -37,15 +41,19 @@ namespace Console_Alpha_V1
             memberClass = mC;
         }
 
-        public Entrant(string cN, string tN, int ovr, int srm, int r, CarModel cM, Class mC)
+        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, CarModel cM, Class mC)
         {
             carNo = cN;
             teamName = tN;
             manufacturer = cM.GetManufacturer();
 
-            mainOVR = ovr + cM.GetMainOVR();
-            baseOVR = ovr + cM.GetMainOVR();
+            mainOVR = tOVR + cOVR + cM.GetMainOVR();
+            baseOVR = tOVR + cOVR + cM.GetMainOVR();
 
+            teamOVR = tOVR;
+            crewOVR = cOVR;
+
+            baseCrewReliability = r;
             baseReliability = r + cM.GetReliability() + mC.GetIRM();
             baseDNFScore = mC.GetDNFRM();
 
@@ -182,6 +190,26 @@ namespace Console_Alpha_V1
             return baseOVR;
         }
 
+        public int GetTeamOVR()
+        {
+            return teamOVR;
+        }
+
+        public void SetCrewOVR(int newOVR)
+        {
+            crewOVR = newOVR;
+        }
+
+        public int GetCrewOVR()
+        {
+            return crewOVR;
+        }
+
+        public void SetSRM(int newSRM)
+        {
+            stintRangeModifier = newSRM;
+        }
+
         public int GetSRM()
         {
             return stintRangeModifier;
@@ -190,6 +218,17 @@ namespace Console_Alpha_V1
         public int GetReliability()
         {
             return reliability;
+        }
+
+        public void SetBaseReliability(int newBaseReliability)
+        {
+            baseCrewReliability = newBaseReliability;
+            baseReliability = newBaseReliability + carModel.GetReliability() + memberClass.GetIRM();
+        }
+
+        public int GetBaseReliability()
+        {
+            return baseCrewReliability;
         }
 
         public int GetDNF()

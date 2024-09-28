@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections;
+using System.Globalization;
 
 namespace Console_Alpha_V1
 {
@@ -22,7 +23,7 @@ namespace Console_Alpha_V1
 
         List<int> pointsSystem, entrantSpacers, spacerList;
 
-        List<Entrant> entryList;
+        List<Entrant> entryList = null;
         List<Series> seriesList;
 
         public Game()
@@ -56,7 +57,7 @@ namespace Console_Alpha_V1
 
         public void PlayGame()
         {
-            SetupTeam();
+            SetupPlayerTeam();
             FileHandler.SetGameSaveFolder(playerTeam);
 
             string roundLength = "";
@@ -66,8 +67,12 @@ namespace Console_Alpha_V1
             {
                 Console.Clear();
 
-                FileHandler.SetSeasonFolder(seasonNumber);
-                FileHandler.WriteTeamData(playerTeam);
+                if (seasonNumber == 1)
+                {
+                    FileHandler.SetSeasonFolder(seasonNumber);
+                }
+
+                FileHandler.WriteTeamData(playerTeam, seasonNumber);
 
                 currentRound = chosenSeries.GetCalendar()[0];
                 LoadEntryList();
@@ -109,15 +114,9 @@ namespace Console_Alpha_V1
 
                     SetPositions();
 
-                    Console.WriteLine("Qualifying Results for {0}:", playerTeam.GetTeamName());
-                    DisplayTeamEntrants();
-                    Console.ReadLine();
-
-                    Console.WriteLine("Full {0} Qualifying Results:", currentRound.GetRoundName());
-                    DisplayEntrants();
-                    SaveResults("Qualifying Results");
-                    Console.ReadLine();
-
+                    DisplayTeamEntrants(string.Format("Qualifying Results for {0}:", playerTeam.GetTeamName()));
+                    DisplayEntrants(string.Format("Full {0} Qualifying Results:", currentRound.GetRoundName()), "Qualifying Results");
+                    
                     gameSimulator.SetGrid(entryList, 10);
 
                     int raceLength = currentRound.GetRaceLength();
@@ -142,14 +141,8 @@ namespace Console_Alpha_V1
                         {
                             SetPositions();
 
-                            Console.WriteLine("{0} Running Positions at Half Distance:", playerTeam.GetTeamName());
-                            DisplayTeamEntrants();
-                            Console.ReadLine();
-
-                            Console.WriteLine("{0} Running Order at Half Distance:", currentRound.GetRoundName());
-                            DisplayEntrants();
-                            SaveResults(string.Format("Half Distance - {0}", halfDistanceString));
-                            Console.ReadLine();
+                            DisplayTeamEntrants(string.Format("{0} Running Positions at Half Distance:", playerTeam.GetTeamName()));
+                            DisplayEntrants(string.Format("{0} Running Order at Half Distance:", currentRound.GetRoundName()), string.Format("Half Distance - {0}", halfDistanceString));
                         }
                     }
 
@@ -165,27 +158,15 @@ namespace Console_Alpha_V1
 
                     SetPositions();
 
-                    Console.WriteLine("{0} Finising Positions:", playerTeam.GetTeamName());
-                    DisplayTeamEntrants();
-                    Console.ReadLine();
-
-                    Console.WriteLine("Full {0} Race Results:", currentRound.GetRoundName());
-                    DisplayEntrants();
-                    SaveResults("Race Results");
-                    Console.ReadLine();
+                    DisplayTeamEntrants(string.Format("{0} Finishing Positions", playerTeam.GetTeamName()));
+                    DisplayEntrants(string.Format("Full {0} Race Results", currentRound.GetRoundName()), "Race Results");
 
                     AwardPoints();
                     SortStandings();
                     SetStandingsPositions();
 
-                    Console.WriteLine("Points Scored by {0}:", playerTeam.GetTeamName());
-                    DisplayTeamPoints();
-                    Console.ReadLine();
-
-                    Console.WriteLine("\nStandings after {0}:\n", currentRound.GetRoundName());
-                    DisplayPoints();
-                    SaveStandings();
-                    Console.ReadLine();
+                    DisplayTeamPoints(string.Format("Points Scored by {0}:", playerTeam.GetTeamName()));
+                    DisplayPoints(string.Format("\nStandings after {0}:\n", currentRound.GetRoundName()));
                 }
 
                 Console.WriteLine("{0} Class Champions:", chosenSeries.GetSeriesName());
@@ -244,7 +225,10 @@ namespace Console_Alpha_V1
                 if (playGame)
                 {
                     seasonNumber++;
+                    FileHandler.SetSeasonFolder(seasonNumber);
+
                     UpdateCrewStats();
+                    UpdatePlayerTeam();
 
                     Console.WriteLine("Press Enter to Start Next Season");
                     Console.ReadLine();
@@ -257,7 +241,7 @@ namespace Console_Alpha_V1
             Console.ReadLine();
         }
 
-        private void SetupTeam()
+        private void SetupPlayerTeam()
         {
             string teamName = "";
             int minimumTeamNameLength = 5;
@@ -294,6 +278,58 @@ namespace Console_Alpha_V1
             Console.ReadLine();
         }
 
+        private void UpdatePlayerTeam()
+        {
+            List<Entrant> playerCrews = playerTeam.GetTeamEntries();
+
+            IndexSort(playerCrews);
+
+            Entrant currentEntrant;
+
+            if (MakeTeamChanges())
+            {
+
+            }
+
+            else
+            {
+                for (int i = 0; i < playerCrews.Count(); i++)
+                {
+                    currentEntrant = playerCrews[i];
+
+                    int newOVR, newReliability;
+
+                    (newOVR, newReliability) = UpdateCrewStat(currentEntrant);
+
+                    currentEntrant.SetCrewOVR(newOVR);
+                    currentEntrant.SetBaseReliability(newReliability);
+                    currentEntrant.SetPoints(0);
+                }
+            }
+        }
+
+        private bool MakeTeamChanges()
+        {
+            return false;
+
+            Console.WriteLine("Make Changes to your Team?\nY - Yes\nN - No");
+            Console.Write("Choice: ");
+
+            string continueChoice = Console.ReadLine().ToUpper();
+
+            if (continueChoice == "Y" || continueChoice == "YES")
+            {
+                return true;
+            }
+
+            else if (continueChoice == "N" || continueChoice == "NO")
+            {
+                return false;
+            }
+
+            Console.WriteLine("Invalid Option");
+            return MakeTeamChanges();
+        }
 
         // Season End Functions
 
@@ -320,7 +356,99 @@ namespace Console_Alpha_V1
 
         private void UpdateCrewStats()
         {
+            // Update Stats
+            Entrant currentEntrant;
 
+            IndexSort(entryList);
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                int newOVR, newReliability;
+
+                (newOVR, newReliability) = UpdateCrewStat(currentEntrant);
+
+                currentEntrant.SetCrewOVR(newOVR);
+                currentEntrant.SetBaseReliability(newReliability);
+            }
+
+            // Rewrite Stats to Appropriate Season Folder
+
+            List<Class> classList = chosenSeries.GetClassList();
+
+            string folderPath = Path.Combine(CommonData.GetSeasonFolder(), "Entrants"),
+                currentClassName = classList[0].GetClassName(),
+                fileName = Path.Combine(folderPath, "Class 1.csv"),
+                writeString = "";
+
+            int classIndex = 1;
+
+            Directory.CreateDirectory(folderPath);
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetTeamName() == playerTeam.GetTeamName())
+                {
+                    break;
+                }
+
+                if (currentEntrant.GetClass().GetClassName() != currentClassName)
+                {
+                    FileHandler.WriteFile(writeString, fileName);
+
+                    currentClassName = classList[classIndex].GetClassName();
+                    classIndex++;
+
+                    writeString = "";
+                    fileName = Path.Combine(folderPath, string.Format("Class {0}.csv", classIndex));
+                }
+
+                writeString += string.Format("{0},{1},{2},{3},,{4},{5},,{6},,{7}\n", currentClassName, currentEntrant.GetCarNo(),
+                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetTeamOVR(),
+                    currentEntrant.GetCrewOVR(), currentEntrant.GetSRM(), currentEntrant.GetBaseReliability());
+            }
+
+            FileHandler.WriteFile(writeString, fileName);
+        }
+
+        private (int, int) UpdateCrewStat(Entrant currentEntrant)
+        {
+            int currentOVR = currentEntrant.GetOVR(),
+                    currentReliability = currentEntrant.GetBaseReliability();
+
+            int ovrUpperRange = currentEntrant.GetClass().GetMaxOVR() - currentOVR,
+                reliabilityUpperRange = 30 - currentReliability;
+
+            if (ovrUpperRange > 3)
+            {
+                ovrUpperRange = 3;
+            }
+
+            if (reliabilityUpperRange > 3)
+            {
+                reliabilityUpperRange = 3;
+            }
+
+            int ovrLowerRange = ovrUpperRange - randomiser.Next(2, 5),
+                reliabilityLowerRange = reliabilityUpperRange - randomiser.Next(2, 5);
+
+            int newOVR = currentOVR + randomiser.Next(ovrLowerRange, ovrUpperRange + 1),
+                newReliability = currentReliability + randomiser.Next(reliabilityLowerRange, reliabilityUpperRange + 1);
+
+            if (newOVR > currentEntrant.GetClass().GetMaxOVR())
+            {
+                newOVR = currentEntrant.GetClass().GetMaxOVR();
+            }
+
+            if (newReliability > 30)
+            {
+                newReliability = 30;
+            }
+
+            return (newOVR, newReliability);
         }
 
 
@@ -358,8 +486,10 @@ namespace Console_Alpha_V1
             Console.ReadLine();
         }
 
-        private void DisplayTeamEntrants()
+        private void DisplayTeamEntrants(string outputString)
         {
+            Console.WriteLine(outputString);
+
             string posString, classPosString;
 
             Entrant currentEntrant;
@@ -390,10 +520,14 @@ namespace Console_Alpha_V1
                     Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
                 }
             }
+
+            Console.ReadLine();
         }
 
-        private void DisplayEntrants()
+        private void DisplayEntrants(string outputString, string saveFile)
         {
+            Console.WriteLine(outputString);
+
             string posString, classPosString;
 
             Entrant currentEntrant;
@@ -409,10 +543,15 @@ namespace Console_Alpha_V1
                     Console.WriteLine("{0} Overall / {1} In {6} - {2} {3} - {4} - {5}", posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetOVR(), currentEntrant.GetClass().GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '));
                 }
             }
+
+            SaveResults(saveFile);
+            Console.ReadLine();
         }
 
-        private void DisplayTeamPoints()
+        private void DisplayTeamPoints(string outputString)
         {
+            Console.WriteLine(outputString);
+
             Entrant currentEntrant;
             List<Entrant> teamEntrants = new List<Entrant>();
 
@@ -435,10 +574,14 @@ namespace Console_Alpha_V1
 
                 Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
             }
+
+            Console.ReadLine();
         }
 
-        private void DisplayPoints()
+        private void DisplayPoints(string outputString)
         {
+            Console.WriteLine(outputString);
+
             string currentClass = chosenSeries.GetClassList()[0].GetClassName();
             int classPosition = 1, classIndex = 1;
 
@@ -460,6 +603,9 @@ namespace Console_Alpha_V1
                 Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetPoints());
                 classPosition++;
             }
+
+            SaveStandings();
+            Console.ReadLine();
         }
 
 
@@ -541,10 +687,10 @@ namespace Console_Alpha_V1
                     string carNumber = GetCarNumber();
 
                     crewOVR = randomiser.Next(chosenClass.GetMinOVR(), chosenClass.GetMaxOVR() + 1);
-                    stintModifier = randomiser.Next(2, 6);
+                    stintModifier = randomiser.Next(1, 6);
                     reliability = randomiser.Next(24, 31);
 
-                    newCrew = new Entrant(carNumber, teamName, teamOVR + crewOVR, stintModifier, reliability, selectedModel, chosenClass);
+                    newCrew = new Entrant(carNumber, teamName, teamOVR, crewOVR, stintModifier, reliability, selectedModel, chosenClass);
                     crewList.Add(newCrew);
 
                     classEntrants[selectedClass]++;
@@ -761,16 +907,34 @@ namespace Console_Alpha_V1
         {
             List<Class> classes = chosenSeries.GetClassList();
 
-            entryList = new List<Entrant>();
+            if (entryList == null)
+            {
+                entryList = new List<Entrant>();
+            }
+
+            else
+            {
+                entryList.Clear();
+            }
 
             CarModel carModel;
             Class enteredClass;
 
             Entrant newEntrant;
 
-            string basePath = Path.Combine(CommonData.GetSetupPath(), chosenSeries.GetFolderName(), "Entrants"), filePath;
+            string basePath, filePath;
             string[] classEntrants, entrantData;
             int index = 0;
+
+            if (seasonNumber == 1)
+            {
+                basePath = Path.Combine(CommonData.GetSetupPath(), chosenSeries.GetFolderName(), "Entrants");
+            }
+
+            else
+            {
+                basePath = Path.Combine(CommonData.GetSeasonFolder(), "Entrants");
+            }
 
             entrantSpacers = new List<int>();
 
@@ -789,7 +953,7 @@ namespace Console_Alpha_V1
                         carModel = chosenSeries.GetCarModel(entrantData[3]);
                         enteredClass = chosenSeries.GetClass(entrantData[0]);
 
-                        newEntrant = new Entrant(entrantData[1], entrantData[2], Convert.ToInt32(entrantData[5]), Convert.ToInt32(entrantData[7]), Convert.ToInt32(entrantData[9]), index, carModel, enteredClass);
+                        newEntrant = new Entrant(entrantData[1], entrantData[2], Convert.ToInt32(entrantData[5]), Convert.ToInt32(entrantData[6]), Convert.ToInt32(entrantData[8]), Convert.ToInt32(entrantData[10]), index, carModel, enteredClass);
                         index++;
 
                         UpdateEntrantSpacers(newEntrant);

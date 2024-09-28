@@ -13,14 +13,16 @@ namespace Console_Alpha_V1
         List<int> spacerList;
 
         Series enteredSeries;
-        List<Entrant> crewList;
+        List<Entrant> crewList, oldCrews;
 
         public Team(string tN, Series eS, List<Entrant> cL)
         {
             teamName = tN;
 
             enteredSeries = eS;
+
             crewList = cL;
+            oldCrews = new List<Entrant>();
 
             SetSpacerList();
         }
@@ -65,6 +67,16 @@ namespace Console_Alpha_V1
         public List<Entrant> GetTeamEntries()
         {
             return crewList;
+        }
+
+        public void AddOldCrew(Entrant oldCrew)
+        {
+            oldCrews.Add(oldCrew);
+        }
+
+        public List<Entrant> GetOldCrews()
+        {
+            return oldCrews;
         }
 
         public List<int> GetSpacerList()

@@ -42,10 +42,10 @@ namespace Console_Alpha_V1
             Directory.CreateDirectory(seasonFolder);
         }
 
-        public static void WriteTeamData(Team playerTeam)
+        public static void WriteTeamData(Team playerTeam, int seasonNumber)
         {
-            string filePath = Path.Combine(CommonData.GetSeasonFolder(), "Team Data.csv"),
-                writeString = playerTeam.GetTeamName() + "\nCrew No,Series,Class,Car No,Manufacturer,,OVR,SRM,Reliability";
+            string filePath = Path.Combine(CommonData.GetSeasonFolder(), string.Format("Team Data - Season {0}.csv", seasonNumber)),
+                writeString = playerTeam.GetTeamName() + "\nCrew No,Series,Class,Car No,Car Model,,Team OVR,Crew OVR,SRM,Reliability";
 
             Entrant currentEntrant;
             List<Entrant> crewList = playerTeam.GetTeamEntries();
@@ -54,8 +54,10 @@ namespace Console_Alpha_V1
             {
                 currentEntrant = crewList[i];
 
-                writeString += String.Format("\nCrew {0},{1},{2},{3},{4},,{5},{6},{7}", i + 1, playerTeam.GetEnteredSeries().GetFolderName(), currentEntrant.GetClass().GetClassName(),
-                    currentEntrant.GetCarNo(), currentEntrant.GetManufacturer(), currentEntrant.GetOVR(), currentEntrant.GetSRM(), currentEntrant.GetReliability());
+                writeString += string.Format("\nCrew {0},{1},{2},{3},{4},,{5},{6},{7},{8}",
+                    i + 1, playerTeam.GetEnteredSeries().GetFolderName(), currentEntrant.GetClass().GetClassName(),
+                    currentEntrant.GetCarNo(), currentEntrant.GetCarModel().GetModelName(),
+                    currentEntrant.GetTeamOVR(), currentEntrant.GetCrewOVR(), currentEntrant.GetSRM(), currentEntrant.GetBaseReliability());
             }
 
             WriteFile(writeString, filePath);
