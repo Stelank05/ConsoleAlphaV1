@@ -9,6 +9,9 @@ It is possible to change the Included Entrants, via the Entrants Folder, and the
 
 Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
 
+**PLEASE NOTE**:
+* As of V1.4.1, the File Structure of the Entry Lists has Changed, necessitating the redownload of the Setup Folder, if you just download the Code Folder
+
 
 **Changelog**
 * V1
@@ -29,3 +32,9 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
   - Results Folder Structure tweaked to include Season Folders within Team Folders
   - Updated Repository Folder Structure
     - Allows to Update only the Code or Setup Files, not having to Update Both
+* V1.4.1
+  - Made Code Changes to how Results are Displayed
+  - Crew Stat Updates + Resaving for both Game Crews, and Player Crews
+    - Game Crews have Entry List Written to relevant Season Folder for Season 2 Onwards
+  - Changed File Structure of Entry List Files to split Team + Crew OVR Scores
+  - FIXED Player Crews not having Points Totals reset between Seasons
