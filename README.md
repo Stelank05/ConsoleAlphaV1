@@ -38,3 +38,12 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
     - Game Crews have Entry List Written to relevant Season Folder for Season 2 Onwards
   - Changed File Structure of Entry List Files to split Team + Crew OVR Scores
   - FIXED Player Crews not having Points Totals reset between Seasons
+* V1.4.2
+  - Fixed Player able to have Multiple Crews with the Same Number
+  - Added Player Team/Crew Editing:
+    - Players can now change their Team Name
+    - Players can now Delete Crews
+    - Players can now change the Number of a Crew Car 
+    - Players can now change the Class of a Crew
+    - Players can now change the Car Model of a Crew
+  - FIXED Multiple Cars in Player Team able to use the Same Car Number
