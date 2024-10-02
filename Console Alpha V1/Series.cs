@@ -11,7 +11,7 @@ namespace Console_Alpha_V1
     public class Series
     {
         string seriesName, folderName;
-        int maxCrews, calendarSpacer, classSpacer;
+        int seriesIndex, maxCrews, calendarSpacer, classSpacer;
 
         List<int> carModelSpacers;
 
@@ -19,11 +19,12 @@ namespace Console_Alpha_V1
         List<Class> classList;
         List<Round> calendar;
 
-        public Series(string sN, string fN, int mC)
+        public Series(string sN, string fN, int mC, int sI)
         {
             seriesName = sN;
             folderName = fN;
 
+            seriesIndex = sI;
             maxCrews = mC;
 
             LoadClasses();
@@ -164,6 +165,11 @@ namespace Console_Alpha_V1
         public string GetSeriesName()
         {
             return seriesName;
+        }
+
+        public int GetSeriesIndex()
+        {
+            return seriesIndex;
         }
 
         public string GetFolderName()

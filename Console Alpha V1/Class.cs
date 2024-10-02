@@ -20,25 +20,25 @@ namespace Console_Alpha_V1
 
         List<string> eligiblePlatforms;
 
-        public Class(string CN, int IRM, int DNF, int SRH, int SRL, int SRI, int Min, int Max, int WEC, int IMSA, int Lap, int CI, List<string> eP)
+        public Class(string cN, int iRM, int dnfScore, int sRH, int sRL, int sRI, int minO, int maxO, int wecDTP, int imsaDTP, int lapDTP, int cI, List<string> eP)
         {
-            className = CN;
+            className = cN;
 
-            incidentRangeModifier = IRM;
-            dnfRateModifier = DNF;
+            incidentRangeModifier = iRM;
+            dnfRateModifier = dnfScore;
 
-            stintRangeHigh = SRH;
-            stintRangeLow = SRL;
-            stintRangeIncident = SRI;
+            stintRangeHigh = sRH;
+            stintRangeLow = sRL;
+            stintRangeIncident = sRI;
 
-            classIndex = CI;
+            classIndex = cI;
 
-            minOVR = Min;
-            maxOVR = Max;
+            minOVR = minO;
+            maxOVR = maxO;
 
-            wecDistanceToPit = WEC;
-            imsaDistanceToPit = IMSA;
-            lapDistanceToPit = Lap;
+            wecDistanceToPit = wecDTP;
+            imsaDistanceToPit = imsaDTP;
+            lapDistanceToPit = lapDTP;
 
             eligiblePlatforms = eP;
         }

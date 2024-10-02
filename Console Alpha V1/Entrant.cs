@@ -8,21 +8,20 @@ namespace Console_Alpha_V1
 {
     public class Entrant
     {
-        string carNo, teamName, manufacturer, currentPositionOverall, currentPositionClass, standingsPosition;
+        string carNo, teamName, currentPositionOverall, currentPositionClass, standingsPosition;
         int mainOVR, baseOVR, teamOVR, crewOVR, stintRangeModifier, isRacingIndex,
             reliability, dnfScore, baseCrewReliability, baseReliability, baseDNFScore,
             lastStint, stintsInGarage, totalStintsInGarage, totalStaysInGarage,
-            points, index, stintsSincePit = 0, totalStops;
+            points, index, seriesIndex, stintsSincePit = 0, totalStops;
         bool isRacing, inGarage = false, extendedGarageStay = false;
 
         CarModel carModel;
         Class memberClass;
 
-        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, int i, CarModel cM, Class mC)
+        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, int i, int sI, CarModel cM, Class mC)
         {
             carNo = cN;
             teamName = tN;
-            manufacturer = cM.GetManufacturer();
 
             mainOVR = tOVR + cOVR + cM.GetMainOVR();
             baseOVR = tOVR + cOVR + cM.GetMainOVR();
@@ -36,17 +35,17 @@ namespace Console_Alpha_V1
 
             stintRangeModifier = srm;
             index = i;
+            seriesIndex = sI;
 
             carModel = cM;
             memberClass = mC;
         }
 
-        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, CarModel cM, Class mC)
+        public Entrant(string cN, string tN, int tOVR, int cOVR, int srm, int r, int sI, CarModel cM, Class mC)
         {
             carNo = cN;
             teamName = tN;
-            manufacturer = cM.GetManufacturer();
-
+            
             mainOVR = tOVR + cOVR + cM.GetMainOVR();
             baseOVR = tOVR + cOVR + cM.GetMainOVR();
 
@@ -114,14 +113,38 @@ namespace Console_Alpha_V1
             index = newIndex;
         }
 
+        public void SetClass(Class newClass)
+        {
+            memberClass = newClass;
+
+            baseReliability = baseCrewReliability + carModel.GetReliability() + memberClass.GetIRM();
+            baseDNFScore = memberClass.GetDNFRM();
+        }
+
         public Class GetClass()
         {
             return memberClass;
         }
 
+        public int GetSeriesIndex()
+        {
+            return seriesIndex;
+        }
+
+        public void SetCarModel(CarModel newCarModel)
+        {
+            carModel = newCarModel;
+            baseReliability = baseCrewReliability + carModel.GetReliability() + memberClass.GetIRM();
+        }
+
         public CarModel GetCarModel()
         {
             return carModel;
+        }
+
+        public void SetCarNumber(string newCarNumber)
+        {
+            carNo = newCarNumber;
         }
 
         public string GetCarNo()
@@ -136,7 +159,7 @@ namespace Console_Alpha_V1
 
         public string GetManufacturer()
         {
-            return manufacturer;
+            return carModel.GetManufacturer();
         }
 
         public void SetCurrentPositions(string overallPosition, string classPosition)

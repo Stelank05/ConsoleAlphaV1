@@ -5,13 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections;
-using System.Globalization;
 
 namespace Console_Alpha_V1
 {
     public class Game
     {
-        int fileNumber = 1, racingCount, seasonNumber = 1;
+        int fileNumber, racingCount, seasonNumber, minimumTeamNameLength;
         bool playGame;
 
         Random randomiser;
@@ -23,13 +22,19 @@ namespace Console_Alpha_V1
 
         List<int> pointsSystem, entrantSpacers, spacerList;
 
-        List<Entrant> entryList = null;
+        List<Entrant> entryList;
         List<Series> seriesList;
 
         public Game()
         {
             CommonData.Setup();
             LoadSeries();
+
+            fileNumber = 1;
+            seasonNumber = 1;
+            minimumTeamNameLength = 5;
+
+            entryList = null;
 
             randomiser = new Random();
             gameSimulator = new Simulator(randomiser);
@@ -47,7 +52,7 @@ namespace Console_Alpha_V1
             {
                 lineData = seriesData[i].Split(',');
 
-                newSeries = new Series(lineData[0], lineData[1], Convert.ToInt32(lineData[2]));
+                newSeries = new Series(lineData[0], lineData[1], Convert.ToInt32(lineData[2]), i);
                 seriesList.Add(newSeries);
             }
         }
@@ -220,7 +225,7 @@ namespace Console_Alpha_V1
                 SaveFinalStandings();
                 Console.ReadLine();
 
-                playGame = ContinueGame();
+                playGame = GetBoolean("Play Another Season?");
 
                 if (playGame)
                 {
@@ -236,16 +241,15 @@ namespace Console_Alpha_V1
             }
 
             Console.WriteLine("Thank you for playing the First Console Alpha of the (Hopefully Happening) Global Endurance Masters Game!");
-            Console.WriteLine("That's the end of the Game, but you can always play again with different Cars");
-            Console.WriteLine("Press Enter to Exit");
+            Console.WriteLine("That's the end of the Game.");//, but you can always play again with different Cars");
+            Console.WriteLine("Press Enter to Exit...");
             Console.ReadLine();
         }
 
         private void SetupPlayerTeam()
         {
             string teamName = "";
-            int minimumTeamNameLength = 5;
-
+            
             while (teamName.Length < minimumTeamNameLength)
             {
                 Console.Write("Please Enter Team Name: ");
@@ -259,9 +263,11 @@ namespace Console_Alpha_V1
 
             chosenSeries = seriesList[SelectSeries(true)];
 
-            List<Entrant> crewList = CreateCrews(teamName, chosenSeries.GetMaxEnterableCrews());
+            (int teamOVR, List<Entrant> crewList) = CreateCrews(teamName, chosenSeries.GetMaxEnterableCrews());
 
-            playerTeam = new Team(teamName, chosenSeries, crewList);
+            playerTeam = new Team(teamName, teamOVR, chosenSeries, crewList);
+
+            playerTeam.OrderCrews();
 
             spacerList = playerTeam.GetSpacerList();
             
@@ -284,33 +290,27 @@ namespace Console_Alpha_V1
 
             IndexSort(playerCrews);
 
-            Entrant currentEntrant;
-
             if (MakeTeamChanges())
             {
+                if (GetBoolean("Change Team Name?"))
+                {
+                    ChangeTeamName();
+                }
 
+                UpdateTeam();
+
+                playerTeam.OrderCrews();
             }
 
             else
             {
-                for (int i = 0; i < playerCrews.Count(); i++)
-                {
-                    currentEntrant = playerCrews[i];
-
-                    int newOVR, newReliability;
-
-                    (newOVR, newReliability) = UpdateCrewStat(currentEntrant);
-
-                    currentEntrant.SetCrewOVR(newOVR);
-                    currentEntrant.SetBaseReliability(newReliability);
-                    currentEntrant.SetPoints(0);
-                }
+                playerTeam.UpdateCrewStats(randomiser);
             }
         }
 
         private bool MakeTeamChanges()
         {
-            return false;
+            //return false;
 
             Console.WriteLine("Make Changes to your Team?\nY - Yes\nN - No");
             Console.Write("Choice: ");
@@ -331,28 +331,177 @@ namespace Console_Alpha_V1
             return MakeTeamChanges();
         }
 
-        // Season End Functions
-
-        private bool ContinueGame()
+        private void ChangeTeamName()
         {
-            Console.WriteLine("Play Another Season?\nY - Yes\nN - No");
-            Console.Write("Choice: ");
+            string teamName = "";
 
-            string continueChoice = Console.ReadLine().ToUpper();
+            while (teamName.Length < minimumTeamNameLength)
+            {
+                Console.Write("Please Enter Team Name: ");
+                teamName = Console.ReadLine();
 
-            if (continueChoice == "Y" || continueChoice == "YES")
+                if (teamName.Length < minimumTeamNameLength)
+                {
+                    Console.WriteLine("Team Name must be at least {0} Characters Long)", minimumTeamNameLength);
+                }
+            }
+
+            playerTeam.SetTeamName(teamName);
+        }
+
+        private void UpdateTeam()
+        {
+            string newCarNumber;
+            int newClass, newOVR, newReliability;
+            bool deleteCrew;
+
+            Entrant currentEntrant;
+
+            List<Entrant> playerCrews = playerTeam.GetTeamEntries();
+            List<Class> classList = chosenSeries.GetClassList();
+
+            for (int i = 0; i < playerCrews.Count(); i++)
+            {
+                currentEntrant = playerCrews[i];
+
+                Console.WriteLine("Current Crew: {0} {1}", currentEntrant.GetCarNo(), currentEntrant.GetManufacturer());
+
+                deleteCrew = false;
+
+                if (playerCrews.Count() > 1)
+                {
+                    deleteCrew = GetBoolean("Delete Crew?");
+                }
+
+                if (!deleteCrew)
+                {
+                    newClass = currentEntrant.GetClassIndex() - 1;
+                    CarModel newCarModel;
+
+                    if (GetBoolean("Change Car Number?"))
+                    {
+                        newCarNumber = GetCarNumber(playerCrews);
+                        currentEntrant.SetCarNumber(newCarNumber);
+                    }
+
+                    if (GetBoolean("Change Class?"))
+                    {
+                        newClass = SelectClass(classList);
+                        currentEntrant.SetClass(classList[newClass]);
+
+                        newCarModel = SelectCarModel(newClass);
+                        currentEntrant.SetCarModel(newCarModel);
+                    }
+
+                    else if (GetBoolean("Change Car Model?"))
+                    {
+                        newCarModel = SelectCarModel(newClass);
+                        currentEntrant.SetCarModel(newCarModel);
+                    }
+
+                    (newOVR, newReliability) = UpdateCrewStat(currentEntrant);
+
+                    currentEntrant.SetCrewOVR(newOVR);
+                    currentEntrant.SetBaseReliability(newReliability);
+                    currentEntrant.SetPoints(0);
+                }
+
+                else
+                {
+                    playerTeam.DeleteCrew(currentEntrant);
+                }
+            }
+
+            int maxCrews = 0;
+
+            foreach (Series enteredSeries in playerTeam.GetEnteredSeriesList())
+            {
+                maxCrews += enteredSeries.GetMaxEnterableCrews();
+            }
+
+            string carNumber;
+            int selectedClass, crewOVR, stintModifier, reliability;
+
+            CarModel selectedModel;
+            Class chosenClass;
+            Entrant newCrew;
+
+            int[] classEntrants = new int[classList.Count()];
+
+            for (int i = 0; i < classEntrants.Length; i++)
+            {
+                classEntrants[i] = 0;
+            }
+
+            for (int i = 0; i < playerTeam.GetTeamEntries().Count(); i++)
+            {
+                classEntrants[playerTeam.GetTeamEntries()[i].GetClassIndex() - 1]++;
+            }
+
+            while (playerTeam.GetTeamEntries().Count() < maxCrews)
+            {
+                if (GetBoolean("Create New Crew?"))
+                {
+                    selectedClass = SelectClass(classList);
+
+                    if (selectedClass == -1)
+                    {
+                        break;
+                    }
+
+                    else if (classEntrants[selectedClass] + 1 > 2)
+                    {
+                        Console.WriteLine("Too Many Entrants in this Class\n");
+                    }
+
+                    else
+                    {
+                        selectedModel = SelectCarModel(selectedClass);
+                        chosenClass = classList[selectedClass];
+
+                        carNumber = GetCarNumber(playerTeam.GetTeamEntries());
+
+                        crewOVR = randomiser.Next(chosenClass.GetMinOVR(), chosenClass.GetMaxOVR() + 1);
+                        stintModifier = randomiser.Next(1, 6);
+                        reliability = randomiser.Next(24, 31);
+
+                        newCrew = new Entrant(carNumber, playerTeam.GetTeamName(), playerTeam.GetTeamOVR(), crewOVR, stintModifier, reliability, chosenSeries.GetSeriesIndex(), selectedModel, chosenClass);
+                        playerTeam.AddCrew(newCrew);
+
+                        classEntrants[selectedClass]++;
+                    }
+                }
+
+                else
+                {
+                    break;
+                }
+            }
+
+            playerTeam.SetSpacerList();
+        }
+
+        private bool GetBoolean(string outputString)
+        {
+            Console.Write("{0}\nY - Yes\nN - No\nChoice: ", outputString);
+            string choice = Console.ReadLine().ToUpper();
+            Console.WriteLine();
+
+            if (choice == "Y" || choice == "YES")
             {
                 return true;
             }
 
-            else if (continueChoice == "N" || continueChoice == "NO")
+            if (choice == "N" || choice == "NO")
             {
                 return false;
             }
 
             Console.WriteLine("Invalid Option");
-            return ContinueGame();
+            return GetBoolean(outputString);
         }
+
+        // Season End Functions
 
         private void UpdateCrewStats()
         {
@@ -646,7 +795,7 @@ namespace Console_Alpha_V1
             return SelectSeries(selectCalendar);
         }
 
-        private List<Entrant> CreateCrews(string teamName, int maxCrews)
+        private (int, List<Entrant>) CreateCrews(string teamName, int maxCrews)
         {
             List<Class> classList = chosenSeries.GetClassList();
             List<Entrant> crewList = new List<Entrant>();
@@ -671,7 +820,7 @@ namespace Console_Alpha_V1
 
                 if (selectedClass == -1)
                 {
-                    return crewList;
+                    return (teamOVR, crewList);
                 }
 
                 else if (classEntrants[selectedClass] + 1 > 2)
@@ -684,20 +833,20 @@ namespace Console_Alpha_V1
                     selectedModel = SelectCarModel(selectedClass);
                     chosenClass = classList[selectedClass];
                     
-                    string carNumber = GetCarNumber();
+                    string carNumber = GetCarNumber(crewList);
 
                     crewOVR = randomiser.Next(chosenClass.GetMinOVR(), chosenClass.GetMaxOVR() + 1);
                     stintModifier = randomiser.Next(1, 6);
                     reliability = randomiser.Next(24, 31);
 
-                    newCrew = new Entrant(carNumber, teamName, teamOVR, crewOVR, stintModifier, reliability, selectedModel, chosenClass);
+                    newCrew = new Entrant(carNumber, teamName, teamOVR, crewOVR, stintModifier, reliability, chosenSeries.GetSeriesIndex(), selectedModel, chosenClass);
                     crewList.Add(newCrew);
 
                     classEntrants[selectedClass]++;
                 }
             }
 
-            return crewList;
+            return (teamOVR, crewList);
         }
 
         private int SelectClass(List<Class> classList)
@@ -813,23 +962,23 @@ namespace Console_Alpha_V1
             return SelectCarModel(chosenClass);
         }
 
-        private string GetCarNumber()
+        private string GetCarNumber(List<Entrant> crewList)
         {
             Console.Write("Please Enter the Desired Car Number: #");
             string desiredNumber = Console.ReadLine();
 
             desiredNumber = desiredNumber.Replace("#", "");
 
-            if (UniqueNumber(desiredNumber))
+            if (UniqueNumber(desiredNumber, crewList))
             {
                 return "#" + desiredNumber;
             }
 
             Console.WriteLine("Invalid / Non-Unique Car Number\n");
-            return GetCarNumber();
+            return GetCarNumber(crewList);
         }
 
-        private bool UniqueNumber(string desiredNumber)
+        private bool UniqueNumber(string desiredNumber, List<Entrant> crewList)
         {
             string filePath;
             string[] usedNumbers = new string[1],
@@ -845,9 +994,9 @@ namespace Console_Alpha_V1
             {
                 string checkNumber = "#" + desiredNumber;
 
-                for (int j = 0; j < 8; j++)
+                for (int i = 0; i < 8; i++)
                 {
-                    filePath = Path.Combine(CommonData.GetSetupPath(), chosenSeries.GetFolderName(), "Entrants", "Class " + (j + 1) + ".csv");
+                    filePath = Path.Combine(CommonData.GetSetupPath(), chosenSeries.GetFolderName(), "Entrants", "Class " + (i + 1) + ".csv");
 
                     fileRead = false;
 
@@ -870,11 +1019,11 @@ namespace Console_Alpha_V1
 
                     if (totalUsedNumbers > 0)
                     {
-                        for (int i = 0; i < totalUsedNumbers; i++)
+                        for (int j = 0; j < totalUsedNumbers; j++)
                         {
-                            if (usedNumbers[i] != "")
+                            if (usedNumbers[j] != "")
                             {
-                                carNumber = usedNumbers[i].Split(',');
+                                carNumber = usedNumbers[j].Split(',');
 
                                 if (carNumber[1] == checkNumber)
                                 {
@@ -888,6 +1037,18 @@ namespace Console_Alpha_V1
                     else
                     {
                         break;
+                    }
+                }
+
+                if (uniqueCarNumber)
+                {
+                    for (int i = 0; i < crewList.Count(); i++)
+                    {
+                        if (crewList[i].GetCarNo() == checkNumber)
+                        {
+                            uniqueCarNumber = false;
+                            break;
+                        }
                     }
                 }
             }
@@ -953,7 +1114,7 @@ namespace Console_Alpha_V1
                         carModel = chosenSeries.GetCarModel(entrantData[3]);
                         enteredClass = chosenSeries.GetClass(entrantData[0]);
 
-                        newEntrant = new Entrant(entrantData[1], entrantData[2], Convert.ToInt32(entrantData[5]), Convert.ToInt32(entrantData[6]), Convert.ToInt32(entrantData[8]), Convert.ToInt32(entrantData[10]), index, carModel, enteredClass);
+                        newEntrant = new Entrant(entrantData[1], entrantData[2], Convert.ToInt32(entrantData[5]), Convert.ToInt32(entrantData[6]), Convert.ToInt32(entrantData[8]), Convert.ToInt32(entrantData[10]), index, chosenSeries.GetSeriesIndex(), carModel, enteredClass);
                         index++;
 
                         UpdateEntrantSpacers(newEntrant);
