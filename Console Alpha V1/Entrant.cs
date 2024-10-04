@@ -8,12 +8,15 @@ namespace Console_Alpha_V1
 {
     public class Entrant
     {
-        string carNo, teamName, currentPositionOverall, currentPositionClass, standingsPosition;
+        string carNo, teamName, currentPositionOverall, currentPositionClass, standingsPosition, bestResult, bestResultString;
         int mainOVR, baseOVR, teamOVR, crewOVR, stintRangeModifier, isRacingIndex,
             reliability, dnfScore, baseCrewReliability, baseReliability, baseDNFScore,
             lastStint, stintsInGarage, totalStintsInGarage, totalStaysInGarage,
-            points, index, seriesIndex, stintsSincePit = 0, totalStops;
+            points, currentRawPosition, timesFinished, index, seriesIndex, stintsSincePit = 0, totalStops;
         bool isRacing, inGarage = false, extendedGarageStay = false;
+
+        List<string> pastResults;
+        List<int> rawResults;
 
         CarModel carModel;
         Class memberClass;
@@ -37,6 +40,11 @@ namespace Console_Alpha_V1
             index = i;
             seriesIndex = sI;
 
+            bestResult = "";
+            timesFinished = 0;
+            pastResults = new List<string>();
+            rawResults = new List<int>();
+
             carModel = cM;
             memberClass = mC;
         }
@@ -57,12 +65,20 @@ namespace Console_Alpha_V1
             baseDNFScore = mC.GetDNFRM();
 
             stintRangeModifier = srm;
-            
+
+            bestResult = "";
+            timesFinished = 0;
+            pastResults = new List<string>();
+            rawResults = new List<int>();
+
             carModel = cM;
             memberClass = mC;
         }
 
         public Entrant() { }
+
+
+        // Round Details
 
         public void SetRound(Round currentRound)
         {
@@ -107,6 +123,9 @@ namespace Console_Alpha_V1
         {
             return isRacingIndex;
         }
+
+
+        // Entrant Details
 
         public void SetIndex(int newIndex)
         {
@@ -160,27 +179,6 @@ namespace Console_Alpha_V1
         public string GetManufacturer()
         {
             return carModel.GetManufacturer();
-        }
-
-        public void SetCurrentPositions(string overallPosition, string classPosition)
-        {
-            currentPositionOverall = overallPosition;
-            currentPositionClass = classPosition;
-        }
-
-        public (string, string) GetCurrentPosition()
-        {
-            return (currentPositionOverall, currentPositionClass);
-        }
-
-        public void SetStandingsPosition(string newPosition)
-        {
-            standingsPosition = newPosition;
-        }
-
-        public string GetStandingsPosition()
-        {
-            return standingsPosition;
         }
 
         public string GetCarAsWriteString()
@@ -259,10 +257,171 @@ namespace Console_Alpha_V1
             return dnfScore;
         }
 
+        public int GetIndex()
+        {
+            return index;
+        }
+
         public int GetClassIndex()
         {
             return memberClass.GetClassIndex();
         }
+
+
+        // Positions + Standings
+
+        public void SetPoints(int PTS)
+        {
+            points = PTS;
+        }
+
+        public int GetPoints()
+        {
+            return points;
+        }
+
+        public void SetCurrentPositions(string overallPosition, string classPosition, int rawPosition)
+        {
+            currentPositionOverall = overallPosition;
+            currentPositionClass = classPosition;
+            currentRawPosition = rawPosition;
+        }
+
+        public (string, string) GetCurrentPosition()
+        {
+            return (currentPositionOverall, currentPositionClass);
+        }
+
+        public void SetStandingsPosition(string newPosition)
+        {
+            standingsPosition = newPosition;
+        }
+
+        public string GetStandingsPosition()
+        {
+            return standingsPosition;
+        }
+
+        public void ResetPastResults()
+        {
+            pastResults.Clear();
+            rawResults.Clear();
+            bestResult = "";
+            bestResultString = "";
+        }
+
+        public void AddResult()
+        {
+            pastResults.Add(currentPositionClass);
+
+            if (currentPositionClass == "NC")
+            {
+                rawResults.Add(currentRawPosition + 100);
+            }
+
+            else if (currentPositionClass == "DNF")
+            {
+                rawResults.Add(currentRawPosition + 200);
+            }
+
+            else
+            {
+                rawResults.Add(currentRawPosition);
+            }
+
+            SetBestResult();
+        }
+
+        public List<string> GetPastResults()
+        {
+            return pastResults;
+        }
+
+        public List<int> GetRawResults()
+        {
+            return rawResults;
+        }
+
+        private void SetBestResult()
+        {
+            bool bestFinish = bestResult == "DNF" || bestResult == "NC",
+                currentFinish = currentPositionClass.StartsWith("P");
+
+            //Console.WriteLine("{0} {1} - {2} / {3} - {4} / {5}", carNo, carModel.GetManufacturer(), bestResult, bestFinish, currentPositionClass, currentFinish);
+
+            if (bestResult == "")
+            {
+                bestResult = currentPositionClass;
+                timesFinished = 1;
+            }
+
+            else if (bestResult == currentPositionClass)
+            {
+                timesFinished++;
+            }
+
+            else if (bestFinish && currentFinish)
+            {
+                bestResult = currentPositionClass;
+                timesFinished = 1;
+            }
+
+            else if (bestFinish && !currentFinish)
+            {
+                if (bestResult == "NC" && currentPositionClass == "NC")
+                {
+                    timesFinished++;
+                }
+
+                else if (bestResult == "DNF" && currentPositionClass == "NC")
+                {
+                    bestResult = currentPositionClass;
+                    timesFinished = 1;
+                }
+            }
+
+            else if (currentFinish)
+            {
+                int iBestResult = Convert.ToInt32(bestResult.Replace("P", "")),
+                    iNewResult = Convert.ToInt32(currentPositionClass.Replace("P", ""));
+
+                if (iNewResult < iBestResult)
+                {
+                    bestResult = currentPositionClass;
+                    timesFinished = 1;
+                }
+            }
+
+            // Set Standings Best Result String
+
+            if (bestResult == "P1")
+            {
+                bestResultString = string.Format("{0} Win", timesFinished);
+
+                if (timesFinished > 1)
+                {
+                    bestResultString += "s";
+                }
+            }
+
+            else
+            {
+                bestResultString = string.Format("Best Result of {0} {1} Time", string.Format("{0},", bestResult).PadRight(4, ' '), timesFinished);
+
+                if (timesFinished > 1)
+                {
+                    bestResultString += "s";
+                }
+            }
+        }
+
+        public string GetBestResult()
+        {
+            return bestResultString;
+        }
+
+
+        // Race Stuffs
 
         public void SetLastStint(int Stint)
         {
@@ -316,21 +475,6 @@ namespace Console_Alpha_V1
         public int GetTotalStintsInGarage()
         {
             return totalStintsInGarage;
-        }
-
-        public void SetPoints(int PTS)
-        {
-            points = PTS;
-        }
-
-        public int GetPoints()
-        {
-            return points;
-        }
-
-        public int GetIndex()
-        {
-            return index;
         }
 
         public void Pit()

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Collections;
 
 namespace Console_Alpha_V1
 {
@@ -163,6 +160,11 @@ namespace Console_Alpha_V1
 
                     SetPositions();
 
+                    for (int i = 0; i < entryList.Count(); i++)
+                    {
+                        entryList[i].AddResult();
+                    }
+
                     DisplayTeamEntrants(string.Format("{0} Finishing Positions", playerTeam.GetTeamName()));
                     DisplayEntrants(string.Format("Full {0} Race Results", currentRound.GetRoundName()), "Race Results");
 
@@ -192,6 +194,7 @@ namespace Console_Alpha_V1
                         championshipSpacers.Add(championshipWinner.GetCarNo().Length);
                         championshipSpacers.Add(championshipWinner.GetTeamName().Length);
                         championshipSpacers.Add(championshipWinner.GetManufacturer().Length);
+                        championshipSpacers.Add(Convert.ToString(championshipWinner.GetPoints()).Length);
                     }
 
                     else
@@ -210,6 +213,11 @@ namespace Console_Alpha_V1
                         {
                             championshipSpacers[2] = championshipWinner.GetManufacturer().Length;
                         }
+
+                        if (Convert.ToString(championshipWinner.GetPoints()).Length > championshipSpacers[3])
+                        {
+                            championshipSpacers[3] = Convert.ToString(championshipWinner.GetPoints()).Length;
+                        }
                     }
 
                     championshipWinners.Add(championshipWinner);
@@ -219,7 +227,7 @@ namespace Console_Alpha_V1
                 {
                     championshipWinner = championshipWinners[classIndex];
 
-                    Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", classList[classIndex].GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '), championshipWinner.GetCarNo().PadRight(championshipSpacers[0], ' '), championshipWinner.GetTeamName().PadRight(championshipSpacers[1], ' '), championshipWinner.GetManufacturer().PadRight(championshipSpacers[2], ' '), championshipWinner.GetPoints());
+                    Console.WriteLine("{0}: {1} {2} - {3} - {4} Points - {5}", classList[classIndex].GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '), championshipWinner.GetCarNo().PadRight(championshipSpacers[0], ' '), championshipWinner.GetTeamName().PadRight(championshipSpacers[1], ' '), championshipWinner.GetManufacturer().PadRight(championshipSpacers[2], ' '), Convert.ToString(championshipWinner.GetPoints()).PadRight(championshipSpacers[3], ' '), championshipWinner.GetBestResult());
                 }
 
                 SaveFinalStandings();
@@ -404,6 +412,7 @@ namespace Console_Alpha_V1
                     currentEntrant.SetCrewOVR(newOVR);
                     currentEntrant.SetBaseReliability(newReliability);
                     currentEntrant.SetPoints(0);
+                    currentEntrant.ResetPastResults();
                 }
 
                 else
@@ -721,7 +730,7 @@ namespace Console_Alpha_V1
             {
                 currentEntrant = teamEntrants[i];
 
-                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
+                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5} - {6}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName(), currentEntrant.GetBestResult());
             }
 
             Console.ReadLine();
@@ -749,7 +758,7 @@ namespace Console_Alpha_V1
                     classIndex++;
                 }
 
-                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points", currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), currentEntrant.GetPoints());
+                Console.WriteLine("{0}: {1} {2} - {3} - {4} Points - {5}", currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetCarNo().PadRight(entrantSpacers[0], ' '), currentEntrant.GetTeamName().PadRight(entrantSpacers[1], ' '), currentEntrant.GetManufacturer().PadRight(entrantSpacers[2], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetBestResult());
                 classPosition++;
             }
 
@@ -820,7 +829,12 @@ namespace Console_Alpha_V1
 
                 if (selectedClass == -1)
                 {
-                    return (teamOVR, crewList);
+                    if (crewList.Count > 0)
+                    {
+                        return (teamOVR, crewList);
+                    }
+
+                    Console.WriteLine("Team Must Include at Least 1 Crew.");
                 }
 
                 else if (classEntrants[selectedClass] + 1 > 2)
@@ -1312,7 +1326,7 @@ namespace Console_Alpha_V1
                     classPositions[classIndex]++;
                 }
 
-                currentEntrant.SetCurrentPositions(posString, classPosString);
+                currentEntrant.SetCurrentPositions(posString, classPosString, i + 1);
             }
         }
 
@@ -1521,6 +1535,9 @@ namespace Console_Alpha_V1
         {
             bool swap;
 
+            int roundIndex = 0;
+            List<int> driver1Results, driver2Results;
+
             for (int i = 0; i < end - 1; i++)
             {
                 swap = false;
@@ -1533,6 +1550,36 @@ namespace Console_Alpha_V1
 
                         (entryList[j], entryList[j + 1]) = (entryList[j + 1], entryList[j]);
                     }
+
+                    else if (entryList[j].GetPoints() == entryList[j + 1].GetPoints())
+                    {
+                        Console.WriteLine();
+                        driver1Results = OrderResults(entryList[j].GetRawResults());
+                        driver2Results = OrderResults(entryList[j + 1].GetRawResults());
+
+                        while (roundIndex < driver1Results.Count())
+                        {
+                            if (driver1Results[roundIndex] > driver2Results[roundIndex])
+                            {
+                                swap = true;
+
+                                (entryList[j], entryList[j + 1]) = (entryList[j + 1], entryList[j]);
+                                break;
+                            }
+
+                            else if (driver1Results[roundIndex] == driver2Results[roundIndex])
+                            {
+                                roundIndex++;
+                            }
+
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        roundIndex = 0;
+                    }
                 }
 
                 if (!swap)
@@ -1540,6 +1587,36 @@ namespace Console_Alpha_V1
                     break;
                 }
             }
+        }
+
+        private List<int> OrderResults(List<int> rawResults)
+        {
+            if (rawResults.Count() > 1)
+            {
+                bool swap;
+
+                for (int i = 0; i < rawResults.Count() - 1; i++)
+                {
+                    swap = false;
+
+                    for (int j = 0; j < rawResults.Count() - i - 1; j++)
+                    {
+                        if (rawResults[j] > rawResults[j + 1])
+                        {
+                            swap = true;
+
+                            (rawResults[j], rawResults[j + 1]) = (rawResults[j + 1], rawResults[j]);
+                        }
+                    }
+
+                    if (!swap)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return rawResults;
         }
 
         private void IsRacingSort(List<Entrant> entryList)
