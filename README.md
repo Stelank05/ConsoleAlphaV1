@@ -46,3 +46,8 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
     - Players can now change the Class of a Crew
     - Players can now change the Car Model of a Crew
   - FIXED Multiple Cars in Player Team able to use the Same Car Number
+* V1.5
+  - Improved Standings
+    - Added Best Results
+    - Added Countback
+  - FIXED Player being able to play without any Crews
