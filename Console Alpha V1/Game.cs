@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Console_Alpha_V1
 {
@@ -17,6 +18,7 @@ namespace Console_Alpha_V1
         Simulator gameSimulator;
         Team playerTeam;
 
+        List<string> foundManufacturers;
         List<int> pointsSystem, entrantSpacers, spacerList;
 
         List<Entrant> entryList;
@@ -32,6 +34,8 @@ namespace Console_Alpha_V1
             minimumTeamNameLength = 5;
 
             entryList = null;
+
+            foundManufacturers = new List<string>();
 
             randomiser = new Random();
             gameSimulator = new Simulator(randomiser);
@@ -162,72 +166,49 @@ namespace Console_Alpha_V1
 
                     for (int i = 0; i < entryList.Count(); i++)
                     {
-                        entryList[i].AddResult();
+                        if (entryList[i].GetRacing())
+                        {
+                            entryList[i].AddResult();
+                        }
                     }
 
                     DisplayTeamEntrants(string.Format("{0} Finishing Positions", playerTeam.GetTeamName()));
                     DisplayEntrants(string.Format("Full {0} Race Results", currentRound.GetRoundName()), "Race Results");
 
-                    AwardPoints();
+                    AwardEntrantPoints();
+                    AwardManufacturersPoints();
                     SortStandings();
                     SetStandingsPositions();
 
                     DisplayTeamPoints(string.Format("Points Scored by {0}:", playerTeam.GetTeamName()));
-                    DisplayPoints(string.Format("\nStandings after {0}:\n", currentRound.GetRoundName()));
+                    DisplayStandings(string.Format("\nStandings after {0}:\n", currentRound.GetRoundName()));
                 }
 
-                Console.WriteLine("{0} Class Champions:", chosenSeries.GetSeriesName());
+                Console.WriteLine("\n{0} Class Champions:", chosenSeries.GetSeriesName());
 
-                Entrant championshipWinner;
+                Entrant entrantChampion;
+                Manufacturer manufacturerChampion;
 
                 List<Class> classList = chosenSeries.GetClassList();
-                List<Entrant> championshipWinners = new List<Entrant>();
-
-                List<int> championshipSpacers = new List<int>();
+                List<Entrant> entrantChampions = new List<Entrant>();
+                List<Manufacturer> manufacturerChampions = new List<Manufacturer>();
 
                 foreach (Class currentClass in classList)
                 {
-                    championshipWinner = GetChampionshipLeader(currentClass.GetClassName());
-
-                    if (championshipSpacers.Count() == 0)
-                    {
-                        championshipSpacers.Add(championshipWinner.GetCarNo().Length);
-                        championshipSpacers.Add(championshipWinner.GetTeamName().Length);
-                        championshipSpacers.Add(championshipWinner.GetManufacturer().Length);
-                        championshipSpacers.Add(Convert.ToString(championshipWinner.GetPoints()).Length);
-                    }
-
-                    else
-                    {
-                        if (championshipWinner.GetCarNo().Length > championshipSpacers[0])
-                        {
-                            championshipSpacers[0] = championshipWinner.GetCarNo().Length;
-                        }
-
-                        if (championshipWinner.GetTeamName().Length > championshipSpacers[1])
-                        {
-                            championshipSpacers[1] = championshipWinner.GetTeamName().Length;
-                        }
-
-                        if (championshipWinner.GetManufacturer().Length > championshipSpacers[2])
-                        {
-                            championshipSpacers[2] = championshipWinner.GetManufacturer().Length;
-                        }
-
-                        if (Convert.ToString(championshipWinner.GetPoints()).Length > championshipSpacers[3])
-                        {
-                            championshipSpacers[3] = Convert.ToString(championshipWinner.GetPoints()).Length;
-                        }
-                    }
-
-                    championshipWinners.Add(championshipWinner);
+                    entrantChampions.Add(GetChampionshipLeader(currentClass.GetClassName()));
+                    manufacturerChampions.Add(currentClass.GetManufacturerList()[0]);
                 }
 
                 for (int classIndex = 0; classIndex < classList.Count(); classIndex++)
                 {
-                    championshipWinner = championshipWinners[classIndex];
+                    Console.WriteLine("\n{0}:", classList[classIndex].GetClassName());
+                    
+                    entrantChampion = entrantChampions[classIndex];
+                    manufacturerChampion = manufacturerChampions[classIndex];
 
-                    Console.WriteLine("{0}: {1} {2} - {3} - {4} Points - {5}", classList[classIndex].GetClassName().PadRight(chosenSeries.GetClassSpacer(), ' '), championshipWinner.GetCarNo().PadRight(championshipSpacers[0], ' '), championshipWinner.GetTeamName().PadRight(championshipSpacers[1], ' '), championshipWinner.GetManufacturer().PadRight(championshipSpacers[2], ' '), Convert.ToString(championshipWinner.GetPoints()).PadRight(championshipSpacers[3], ' '), championshipWinner.GetBestResult());
+                    Console.WriteLine(" Entrant Champion:\n  {0} {1} - {2}\n   {3} Points - {4}", entrantChampion.GetCarNo(), entrantChampion.GetTeamName(), entrantChampion.GetManufacturer(), Convert.ToString(entrantChampion.GetPoints()), entrantChampion.GetBestResult());
+                    Console.WriteLine(" Manufacturer Champion:\n  {0}\n   {1} Points - {2}", manufacturerChampion.GetManufacturerName(), manufacturerChampion.GetPoints(), manufacturerChampion.GetBestResult());
+                    //Console.WriteLine();
                 }
 
                 SaveFinalStandings();
@@ -510,6 +491,7 @@ namespace Console_Alpha_V1
             return GetBoolean(outputString);
         }
 
+
         // Season End Functions
 
         private void UpdateCrewStats()
@@ -730,31 +712,37 @@ namespace Console_Alpha_V1
             {
                 currentEntrant = teamEntrants[i];
 
-                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5} - {6}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName(), currentEntrant.GetBestResult());
+                Console.WriteLine("Crew {0}: {1} {2} - {3} Points - {4} in {5} - {6}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), Convert.ToString(currentEntrant.GetPoints()).PadRight(3, ' '), currentEntrant.GetStandingsPosition().PadRight(3, ' '), currentEntrant.GetClass().GetClassName().PadRight(spacerList[2], ' '), currentEntrant.GetBestResult());
             }
 
             Console.ReadLine();
         }
 
-        private void DisplayPoints(string outputString)
+        private void DisplayStandings(string outputString)
         {
             Console.WriteLine(outputString);
 
-            string currentClass = chosenSeries.GetClassList()[0].GetClassName();
+            List<Class> classList = chosenSeries.GetClassList();
+            Class currentClass = classList[0];
+
+            string currentClassName = chosenSeries.GetClassList()[0].GetClassName();
             int classPosition = 1, classIndex = 1;
 
             Entrant currentEntrant;
 
-            Console.WriteLine("{0}:", currentClass);
+            Console.WriteLine("{0}:\n\nEntrant Standings:", currentClassName);
 
             for (int i = 0; i < entryList.Count(); i++)
             {
                 currentEntrant = entryList[i];
 
-                if (currentEntrant.GetClass().GetClassName() != currentClass)
+                if (currentEntrant.GetClass().GetClassName() != currentClassName)
                 {
-                    currentClass = chosenSeries.GetClassList()[classIndex].GetClassName();
-                    Console.WriteLine("\n{0}:", currentClass);
+                    DisplayManufacturerStandings(currentClass);
+
+                    currentClass = chosenSeries.GetClassList()[classIndex];
+                    currentClassName = currentClass.GetClassName();
+                    Console.WriteLine("\n\n{0}:\n\nEntrant Standings:", currentClassName);
                     classIndex++;
                 }
 
@@ -762,8 +750,22 @@ namespace Console_Alpha_V1
                 classPosition++;
             }
 
+            DisplayManufacturerStandings(currentClass);
+
             SaveStandings();
             Console.ReadLine();
+        }
+
+        private void DisplayManufacturerStandings(Class currentClass)
+        {
+            Console.WriteLine("\nManufacturers Standings:");
+
+            List<Manufacturer> manufacturerList = currentClass.GetManufacturerList();
+
+            for (int i = 0; i < manufacturerList.Count(); i++)
+            {
+                Console.WriteLine("{0}: {1} - {2} Points - {3}", ("P" + (i + 1)).PadRight(3, ' '), manufacturerList[i].GetManufacturerName().PadRight(entrantSpacers[2], ' '), Convert.ToString(manufacturerList[i].GetPoints()).PadRight(3, ' '), manufacturerList[i].GetBestResult());
+            }
         }
 
 
@@ -1151,6 +1153,46 @@ namespace Console_Alpha_V1
 
                 index++;
             }
+
+            SetManufacturers();
+        }
+
+        private void SetManufacturers()
+        {
+            List<string> manufacturers = new List<string>();
+            List<Class> classList = chosenSeries.GetClassList();
+
+            Class currentClass = classList[0];
+            Entrant currentEntrant;
+
+            string currentClassName = currentClass.GetClassName();
+            int currentClassIndex = 1;
+
+            ClassIndexSort(entryList);
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetClass().GetClassName() != currentClassName)
+                {
+                    currentClass.SetManufacturerList(manufacturers);
+                    currentClass = classList[currentClassIndex];
+                    currentClassName = currentClass.GetClassName();
+                    currentClassIndex++;
+
+                    manufacturers.Clear();
+                }
+
+                if (!manufacturers.Contains(currentEntrant.GetManufacturer()))
+                {
+                    manufacturers.Add(currentEntrant.GetManufacturer());
+                }
+            }
+
+            currentClass.SetManufacturerList(manufacturers);
+
+            IndexSort(entryList);
         }
 
         private void UpdateEntrantSpacers(Entrant newEntrant)
@@ -1208,7 +1250,7 @@ namespace Console_Alpha_V1
 
         // Points System Functions
 
-        private void AwardPoints()
+        private void AwardEntrantPoints()
         {
             List<Class> classList = chosenSeries.GetClassList();
 
@@ -1231,6 +1273,54 @@ namespace Console_Alpha_V1
                     entryList[i].SetPoints(entryList[i].GetPoints() + pointsSystem[classPosition]);
                     classPosition++;
                 }
+            }
+        }
+
+        private void AwardManufacturersPoints()
+        {
+            ClassIndexSort(entryList);
+
+            List<Class> classList = chosenSeries.GetClassList();
+            Class currentClass = classList[0];
+
+            foundManufacturers.Clear();
+
+            int classPosition = 0, classIndex = 1, manufacturerIndex;
+            Entrant currentEntrant;
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+
+                if (currentEntrant.GetClass().GetClassName() != currentClass.GetClassName())
+                {
+                    classPosition = 0;
+                    
+                    currentClass = classList[classIndex];
+                    classIndex++;
+
+                    foundManufacturers.Clear();
+                }
+
+                if (!foundManufacturers.Contains(currentEntrant.GetManufacturer()) && currentEntrant.GetRacing())
+                {
+                    manufacturerIndex = currentClass.GetManufacturerIndex(currentEntrant.GetManufacturer());
+
+                    if (classPosition >= pointsSystem.Count() || currentEntrant.GetOVR() <= 100)
+                    {
+                        currentClass.GetManufacturerList()[manufacturerIndex].AddPoints(0);
+                    }
+                    
+                    else
+                    {
+                        currentClass.GetManufacturerList()[manufacturerIndex].AddPoints(pointsSystem[classPosition]);
+                    }
+
+                    currentClass.GetManufacturerList()[manufacturerIndex].AddResult(currentEntrant.GetCurrentPosition().Item2, classPosition);
+                    foundManufacturers.Add(currentEntrant.GetManufacturer());
+                }
+
+                classPosition++;
             }
         }
 
@@ -1392,30 +1482,36 @@ namespace Console_Alpha_V1
             List<Class> classList = chosenSeries.GetClassList();
 
             string folderPath = Path.Combine(currentRound.GetFolder(), "Post Race Standings"),
-                currentClassName = classList[0].GetClassName(),
-                fileName = Path.Combine(folderPath, string.Format("Class 1 - {0}.csv", currentClassName)),
-                writeString = "";
+                currentClassName = classList[0].GetClassName(), writeString = "",
+                folderName = Path.Combine(folderPath, string.Format("Class 1 - {0}", currentClassName)),
+                fileName = Path.Combine(folderName, "Entrant Standings.csv");
 
-            int classIndex = 1;
+            int classIndex = 0;
 
             Entrant currentEntrant;
-
+            
             Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory(folderName);
 
             for (int i = 0; i < entryList.Count(); i++)
             {
                 currentEntrant = entryList[i];
-                
+
                 if (currentEntrant.GetClass().GetClassName() != currentClassName)
                 {
                     FileHandler.WriteFile(writeString, fileName);
-                    
-                    currentClassName = classList[classIndex].GetClassName();
+
+                    SaveManufacturersStandings(classList[classIndex], folderName);
+
                     classIndex++;
-                    
+                    currentClassName = classList[classIndex].GetClassName();                    
+
                     writeString = "";
+
+                    folderName = Path.Combine(folderPath, string.Format("Class {0} - {1}", classIndex + 1, currentClassName));
+                    fileName = Path.Combine(folderName, "Entrant Standings.csv");
                     
-                    fileName = Path.Combine(folderPath, string.Format("Class {0} - {1}.csv", classIndex, currentClassName));
+                    Directory.CreateDirectory(folderName);
                 }
 
                 writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
@@ -1423,6 +1519,7 @@ namespace Console_Alpha_V1
             }
 
             FileHandler.WriteFile(writeString, fileName);
+            SaveManufacturersStandings(classList[classIndex], folderName);
         }
 
         private void SaveFinalStandings()
@@ -1431,13 +1528,15 @@ namespace Console_Alpha_V1
 
             string folderPath = Path.Combine(CommonData.GetSeasonFolder(), "Final Standings"),
                 currentClassName = classList[0].GetClassName(), writeString = "",
-                fileName = Path.Combine(folderPath, string.Format("Class 1 - {0}.csv", currentClassName));
+                folderName = Path.Combine(folderPath, string.Format("Class 1 - {0}", currentClassName)),
+                fileName = Path.Combine(folderName, "Entrant Standings.csv");
 
-            int classIndex = 1;
+            int classIndex = 0;
 
             Entrant currentEntrant;
 
             Directory.CreateDirectory(folderPath);
+            Directory.CreateDirectory(folderName);
 
             for (int i = 0; i < entryList.Count(); i++)
             {
@@ -1447,12 +1546,17 @@ namespace Console_Alpha_V1
                 {
                     FileHandler.WriteFile(writeString, fileName);
 
-                    currentClassName = classList[classIndex].GetClassName();
+                    SaveManufacturersStandings(classList[classIndex], folderName);
+
                     classIndex++;
+                    currentClassName = classList[classIndex].GetClassName();
 
                     writeString = "";
 
-                    fileName = Path.Combine(folderPath, string.Format("Class {0} - {1}.csv", classIndex, currentClassName));
+                    folderName = Path.Combine(folderPath, string.Format("Class {0} - {1}", classIndex + 1, currentClassName));
+                    fileName = Path.Combine(folderName, "Entrant Standings.csv");
+
+                    Directory.CreateDirectory(folderName);
                 }
 
                 writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
@@ -1460,6 +1564,22 @@ namespace Console_Alpha_V1
             }
 
             FileHandler.WriteFile(writeString, fileName);
+            SaveManufacturersStandings(classList[classIndex], folderName);
+        }
+
+        private void SaveManufacturersStandings(Class currentClass, string folderPath)
+        {
+            string filePath = Path.Combine(folderPath, "Manufacturer Standings.csv"),
+                writeString = "";
+
+            List<Manufacturer> manufacturerList = currentClass.GetManufacturerList();
+
+            for (int i = 0; i < manufacturerList.Count(); i++)
+            {
+                writeString += string.Format("P{0},{1},{2}\n", i + 1, manufacturerList[i].GetManufacturerName(), manufacturerList[i].GetPoints());
+            }
+
+            FileHandler.WriteFile(writeString, filePath);
         }
 
 
@@ -1490,23 +1610,50 @@ namespace Console_Alpha_V1
             }
         }
 
-        private void ClassSort()
+        private void ClassIndexSort(List<Entrant> entryList)
         {
+            bool swap;
+
             for (int i = 0; i < entryList.Count() - 1; i++)
             {
-                bool Swap = false;
+                swap = false;
 
                 for (int j = 0; j < entryList.Count() - i - 1; j++)
                 {
                     if (entryList[j].GetClassIndex() > entryList[j + 1].GetClassIndex())
                     {
-                        Swap = true;
+                        swap = true;
 
                         (entryList[j], entryList[j + 1]) = (entryList[j + 1], entryList[j]);
                     }
                 }
 
-                if (!Swap)
+                if (!swap)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void ClassSort()
+        {
+            bool swap;
+
+            for (int i = 0; i < entryList.Count() - 1; i++)
+            {
+                swap = false;
+
+                for (int j = 0; j < entryList.Count() - i - 1; j++)
+                {
+                    if (entryList[j].GetClassIndex() > entryList[j + 1].GetClassIndex())
+                    {
+                        swap = true;
+
+                        (entryList[j], entryList[j + 1]) = (entryList[j + 1], entryList[j]);
+                    }
+                }
+
+                if (!swap)
                 {
                     break;
                 }
@@ -1515,20 +1662,25 @@ namespace Console_Alpha_V1
 
         private void SortStandings()
         {
-            string currentClass = chosenSeries.GetClassList()[0].GetClassName();
+            string currentClassName = chosenSeries.GetClassList()[0].GetClassName();
             int startIndex = 0;
 
             for (int i = 0; i < entryList.Count(); i++)
             {
-                if (entryList[i].GetClass().GetClassName() != currentClass)
+                if (entryList[i].GetClass().GetClassName() != currentClassName)
                 {
                     SortPoints(startIndex, i);
-                    currentClass = entryList[i].GetClass().GetClassName();
+                    currentClassName = entryList[i].GetClass().GetClassName();
                     startIndex = i;
                 }
             }
 
             SortPoints(startIndex, entryList.Count());
+
+            foreach (Class currentClass in chosenSeries.GetClassList())
+            {
+                currentClass.SortStandings();
+            }
         }
 
         private void SortPoints(int start, int end)
@@ -1553,7 +1705,6 @@ namespace Console_Alpha_V1
 
                     else if (entryList[j].GetPoints() == entryList[j + 1].GetPoints())
                     {
-                        Console.WriteLine();
                         driver1Results = OrderResults(entryList[j].GetRawResults());
                         driver2Results = OrderResults(entryList[j + 1].GetRawResults());
 

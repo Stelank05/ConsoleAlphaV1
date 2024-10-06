@@ -42,6 +42,7 @@ namespace Console_Alpha_V1
                 {
                     spacerList.Add(newEntrant.GetCarNo().Length);
                     spacerList.Add(newEntrant.GetManufacturer().Length);
+                    spacerList.Add(newEntrant.GetClass().GetClassName().Length);
                 }
 
                 else
@@ -54,6 +55,11 @@ namespace Console_Alpha_V1
                     if (newEntrant.GetManufacturer().Length > spacerList[1])
                     {
                         spacerList[1] = newEntrant.GetManufacturer().Length;
+                    }
+
+                    if (newEntrant.GetClass().GetClassName().Length > spacerList[2])
+                    {
+                        spacerList[2] = newEntrant.GetClass().GetClassName().Length;
                     }
                 }
             }
@@ -205,6 +211,7 @@ namespace Console_Alpha_V1
                 currentEntrant.SetCrewOVR(newOVR);
                 currentEntrant.SetBaseReliability(newReliability);
                 currentEntrant.SetPoints(0);
+                currentEntrant.ResetPastResults();
             }
         }
 

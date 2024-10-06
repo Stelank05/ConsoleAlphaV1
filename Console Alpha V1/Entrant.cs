@@ -347,8 +347,6 @@ namespace Console_Alpha_V1
             bool bestFinish = bestResult == "DNF" || bestResult == "NC",
                 currentFinish = currentPositionClass.StartsWith("P");
 
-            //Console.WriteLine("{0} {1} - {2} / {3} - {4} / {5}", carNo, carModel.GetManufacturer(), bestResult, bestFinish, currentPositionClass, currentFinish);
-
             if (bestResult == "")
             {
                 bestResult = currentPositionClass;

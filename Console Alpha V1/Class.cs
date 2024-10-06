@@ -20,6 +20,8 @@ namespace Console_Alpha_V1
 
         List<string> eligiblePlatforms;
 
+        List<Manufacturer> manufacturerList;
+
         public Class(string cN, int iRM, int dnfScore, int sRH, int sRL, int sRI, int minO, int maxO, int wecDTP, int imsaDTP, int lapDTP, int cI, List<string> eP)
         {
             className = cN;
@@ -41,9 +43,127 @@ namespace Console_Alpha_V1
             lapDistanceToPit = lapDTP;
 
             eligiblePlatforms = eP;
+
+            manufacturerList = new List<Manufacturer>();
         }
 
         public Class() { }
+
+        public void SetManufacturerList(List<string> manufacturers)
+        {
+            manufacturerList.Clear();
+
+            foreach (string manufacturer in manufacturers)
+            {
+                manufacturerList.Add(new Manufacturer(manufacturer));
+            }
+        }
+
+        public List<Manufacturer> GetManufacturerList()
+        {
+            return manufacturerList;
+        }
+
+        public int GetManufacturerIndex(string targetManufacturer)
+        {
+            for (int i = 0; i < manufacturerList.Count(); i++)
+            {
+                if (manufacturerList[i].GetManufacturerName() == targetManufacturer)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public void SortStandings()
+        {
+            bool swap;
+
+            int roundIndex = 0;
+            List<int> driver1Results, driver2Results;
+
+            for (int i = 0; i < manufacturerList.Count() - 1; i++)
+            {
+                swap = false;
+
+                for (int j = 0; j < manufacturerList.Count() - i - 1; j++)
+                {
+                    if (manufacturerList[j].GetPoints() < manufacturerList[j + 1].GetPoints())
+                    {
+                        swap = true;
+
+                        (manufacturerList[j], manufacturerList[j + 1]) = (manufacturerList[j + 1], manufacturerList[j]);
+                    }
+
+                    else if (manufacturerList[j].GetPoints() == manufacturerList[j + 1].GetPoints())
+                    {
+                        driver1Results = OrderResults(manufacturerList[j].GetResults());
+                        driver2Results = OrderResults(manufacturerList[j + 1].GetResults());
+
+                        while (roundIndex < driver1Results.Count())
+                        {
+                            if (driver1Results[roundIndex] > driver2Results[roundIndex])
+                            {
+                                swap = true;
+
+                                (manufacturerList[j], manufacturerList[j + 1]) = (manufacturerList[j + 1], manufacturerList[j]);
+                                break;
+                            }
+
+                            else if (driver1Results[roundIndex] == driver2Results[roundIndex])
+                            {
+                                roundIndex++;
+                            }
+
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        roundIndex = 0;
+                    }
+                }
+
+                if (!swap)
+                {
+                    break;
+                }
+            }
+        }
+
+        private List<int> OrderResults(List<int> rawResults)
+        {
+            if (rawResults.Count() > 1)
+            {
+                bool swap;
+
+                for (int i = 0; i < rawResults.Count() - 1; i++)
+                {
+                    swap = false;
+
+                    for (int j = 0; j < rawResults.Count() - i - 1; j++)
+                    {
+                        if (rawResults[j] > rawResults[j + 1])
+                        {
+                            swap = true;
+
+                            (rawResults[j], rawResults[j + 1]) = (rawResults[j + 1], rawResults[j]);
+                        }
+                    }
+
+                    if (!swap)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return rawResults;
+        }
+
 
         public void SetClassName(string newClassName)
         {

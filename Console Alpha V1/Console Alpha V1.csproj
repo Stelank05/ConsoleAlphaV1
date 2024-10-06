@@ -56,7 +56,6 @@
     <Compile Include="Round.cs" />
     <Compile Include="Series.cs" />
     <Compile Include="Simulator.cs" />
-    <Compile Include="Standings.cs" />
     <Compile Include="Team.cs" />
   </ItemGroup>
   <ItemGroup>
