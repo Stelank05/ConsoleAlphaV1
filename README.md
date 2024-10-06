@@ -106,3 +106,11 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
     - Added Best Results
     - Added Countback
   - FIXED Player being able to play without any Crews
+* V1.5.1
+  - Further Standings Improvements
+    - Added Manufacturer Standings
+    - Changed Standings Saving
+      - Now Stored in Folders by Class
+  - FIXED Entrant Best Results being Updated even if Entrant wasn't Racing
+  - FIXED Entrant Best Results not being Reset if Player makes no Team Changes
+  - FIXED Class Names not being properly Spaced in Player Team Standings Output
