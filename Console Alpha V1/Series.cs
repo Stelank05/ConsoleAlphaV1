@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
-using System.Data.OleDb;
 
 namespace Console_Alpha_V1
 {
@@ -81,8 +78,6 @@ namespace Console_Alpha_V1
             modelList = new List<CarModel>();
             CarModel newCarModel;
 
-            Class enteredClass;
-
             string carModelFile = Path.Combine(CommonData.GetSetupPath(), folderName, "Available Cars.csv");
 
             string[] modelData = FileHandler.ReadFile(carModelFile);
@@ -94,9 +89,7 @@ namespace Console_Alpha_V1
             {
                 splitLine = modelData[i].Split(',');
 
-                enteredClass = GetEnteredClass(splitLine[2]);
-
-                newCarModel = new CarModel(splitLine[0], splitLine[1], splitLine[2], Convert.ToInt32(splitLine[3]), Convert.ToInt32(splitLine[4]), Convert.ToInt32(splitLine[5]), enteredClass);
+                newCarModel = new CarModel(splitLine[0], splitLine[1], splitLine[2], Convert.ToInt32(splitLine[3]), Convert.ToInt32(splitLine[4]), Convert.ToInt32(splitLine[5]));
 
                 UpdateCarModelSpacers(newCarModel);
 

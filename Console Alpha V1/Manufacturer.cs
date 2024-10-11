@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Console_Alpha_V1
 {
@@ -128,9 +129,26 @@ namespace Console_Alpha_V1
             return bestResultString;
         }
 
+        public string GetBestResultOutput()
+        {
+            return string.Format("{0}x{1}", bestResult, timesFinished);
+        }
+
         public List<int> GetResults()
         {
             return rawResults;
+        }
+
+        public string GetResultsString()
+        {
+            string resultString = pastResults[0];
+
+            for (int i = 1; i < pastResults.Count(); i++)
+            {
+                resultString += string.Format(",{0}", pastResults[i]);
+            }
+
+            return resultString;
         }
 
         public void AddPoints(int scoredPoints)

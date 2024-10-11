@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Console_Alpha_V1
 {
@@ -339,6 +340,18 @@ namespace Console_Alpha_V1
             return rawResults;
         }
 
+        public string GetResultString()
+        {
+            string resultString = pastResults[0];
+
+            for (int i = 1; i < pastResults.Count(); i++)
+            {
+                resultString += string.Format(",{0}", pastResults[i]);
+            }
+
+            return resultString;
+        }
+
         private void SetBestResult()
         {
             bool bestFinish = bestResult == "DNF" || bestResult == "NC",
@@ -413,6 +426,11 @@ namespace Console_Alpha_V1
         public string GetBestResult()
         {
             return bestResultString;
+        }
+
+        public string GetBestResultOutput()
+        {
+            return string.Format("{0}x{1}", bestResult, timesFinished);
         }
 
 

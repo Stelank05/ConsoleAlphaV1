@@ -120,6 +120,7 @@ namespace Console_Alpha_V1
                     SetPositions();
 
                     DisplayTeamEntrants(string.Format("Qualifying Results for {0}:", playerTeam.GetTeamName()));
+                    DisplayLeaders(string.Format("Class Polesitters for {0}:", currentRound.GetRoundName()));
                     DisplayEntrants(string.Format("Full {0} Qualifying Results:", currentRound.GetRoundName()), "Qualifying Results");
                     
                     gameSimulator.SetGrid(entryList, 10);
@@ -147,6 +148,7 @@ namespace Console_Alpha_V1
                             SetPositions();
 
                             DisplayTeamEntrants(string.Format("{0} Running Positions at Half Distance:", playerTeam.GetTeamName()));
+                            DisplayLeaders(string.Format("{0} Class Leaders at Half Distance", currentRound.GetRoundName()));
                             DisplayEntrants(string.Format("{0} Running Order at Half Distance:", currentRound.GetRoundName()), string.Format("Half Distance - {0}", halfDistanceString));
                         }
                     }
@@ -172,6 +174,7 @@ namespace Console_Alpha_V1
                     }
 
                     DisplayTeamEntrants(string.Format("{0} Finishing Positions", playerTeam.GetTeamName()));
+                    DisplayLeaders(string.Format("Class Winners for {0}", currentRound.GetRoundName()));
                     DisplayEntrants(string.Format("Full {0} Race Results", currentRound.GetRoundName()), "Race Results");
 
                     AwardEntrantPoints();
@@ -211,6 +214,7 @@ namespace Console_Alpha_V1
                 }
 
                 SaveFinalStandings();
+                playerTeam.SaveTeamResults(seasonNumber);
                 Console.ReadLine();
 
                 playGame = GetBoolean("Play Another Season?");
@@ -228,6 +232,7 @@ namespace Console_Alpha_V1
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Thank you for playing the First Console Alpha of the (Hopefully Happening) Global Endurance Masters Game!");
             Console.WriteLine("That's the end of the Game.");//, but you can always play again with different Cars");
             Console.WriteLine("Press Enter to Exit...");
@@ -270,6 +275,87 @@ namespace Console_Alpha_V1
             }
 
             Console.ReadLine();
+
+            ConfirmTeamDetails();
+        }
+
+        private void ConfirmTeamDetails()
+        {
+            if (GetBoolean("Change Team Details?"))
+            {
+                if (GetBoolean("\nChange Team Name?"))
+                {
+                    ChangeTeamName();
+                }
+
+                string newCarNumber;
+                int newClass, newOVR, newReliability;
+
+                Entrant currentEntrant;
+
+                List<Class> classList = chosenSeries.GetClassList();
+                List<Entrant> crewList = playerTeam.GetTeamEntries();
+
+                Console.WriteLine();
+
+                for (int i = 0; i < crewList.Count(); i++)
+                {
+                    currentEntrant = crewList[i];
+
+                    Console.WriteLine("Current Crew: {0} {1}", currentEntrant.GetCarNo(), currentEntrant.GetManufacturer());
+
+                    if (GetBoolean("\nChange Crew Details?"))
+                    {
+                        newClass = currentEntrant.GetClassIndex() - 1;
+                        CarModel newCarModel;
+
+                        if (GetBoolean("\nChange Car Number?"))
+                        {
+                            newCarNumber = GetCarNumber(crewList);
+                            currentEntrant.SetCarNumber(newCarNumber);
+                        }
+
+                        if (GetBoolean("\nChange Class?"))
+                        {
+                            newClass = SelectClass(classList);
+                            currentEntrant.SetClass(classList[newClass]);
+                            //Console.WriteLine();
+                            newCarModel = SelectCarModel(newClass);
+                            currentEntrant.SetCarModel(newCarModel);
+                        }
+
+                        else if (GetBoolean("\nChange Car Model?"))
+                        {
+                            newCarModel = SelectCarModel(newClass);
+                            currentEntrant.SetCarModel(newCarModel);
+                        }
+
+                        (newOVR, newReliability) = UpdateCrewStat(currentEntrant);
+
+                        currentEntrant.SetCrewOVR(newOVR);
+                        currentEntrant.SetBaseReliability(newReliability);
+                        currentEntrant.SetPoints(0);
+                        currentEntrant.ResetPastResults();
+
+                        Console.WriteLine();
+                    }
+                }
+
+                playerTeam.SetSpacerList();
+
+                Console.WriteLine("Team Information:");
+                Console.WriteLine("Team Name: {0}", playerTeam.GetTeamName());
+                Console.WriteLine("Entered Series: {0}", playerTeam.GetEnteredSeries().GetSeriesName());
+
+                spacerList = playerTeam.GetSpacerList();
+
+                for (int i = 0; i < playerTeam.GetTeamEntries().Count(); i++)
+                {
+                    Console.WriteLine("Crew {0}: {1} {2} - {3}", i + 1, playerTeam.GetTeamEntries()[i].GetCarNo().PadRight(spacerList[0], ' '), playerTeam.GetTeamEntries()[i].GetCarModel().GetManufacturer().PadRight(spacerList[1], ' '), playerTeam.GetTeamEntries()[i].GetClass().GetClassName());
+                }
+
+                Console.ReadLine();
+            }
         }
 
         private void UpdatePlayerTeam()
@@ -278,9 +364,9 @@ namespace Console_Alpha_V1
 
             IndexSort(playerCrews);
 
-            if (MakeTeamChanges())
+            if (GetBoolean("\nMake Changes to your Team?"))
             {
-                if (GetBoolean("Change Team Name?"))
+                if (GetBoolean("\nChange Team Name?"))
                 {
                     ChangeTeamName();
                 }
@@ -294,29 +380,6 @@ namespace Console_Alpha_V1
             {
                 playerTeam.UpdateCrewStats(randomiser);
             }
-        }
-
-        private bool MakeTeamChanges()
-        {
-            //return false;
-
-            Console.WriteLine("Make Changes to your Team?\nY - Yes\nN - No");
-            Console.Write("Choice: ");
-
-            string continueChoice = Console.ReadLine().ToUpper();
-
-            if (continueChoice == "Y" || continueChoice == "YES")
-            {
-                return true;
-            }
-
-            else if (continueChoice == "N" || continueChoice == "NO")
-            {
-                return false;
-            }
-
-            Console.WriteLine("Invalid Option");
-            return MakeTeamChanges();
         }
 
         private void ChangeTeamName()
@@ -348,6 +411,8 @@ namespace Console_Alpha_V1
             List<Entrant> playerCrews = playerTeam.GetTeamEntries();
             List<Class> classList = chosenSeries.GetClassList();
 
+            Console.WriteLine();
+
             for (int i = 0; i < playerCrews.Count(); i++)
             {
                 currentEntrant = playerCrews[i];
@@ -358,7 +423,7 @@ namespace Console_Alpha_V1
 
                 if (playerCrews.Count() > 1)
                 {
-                    deleteCrew = GetBoolean("Delete Crew?");
+                    deleteCrew = GetBoolean("\nDelete Crew?");
                 }
 
                 if (!deleteCrew)
@@ -366,22 +431,22 @@ namespace Console_Alpha_V1
                     newClass = currentEntrant.GetClassIndex() - 1;
                     CarModel newCarModel;
 
-                    if (GetBoolean("Change Car Number?"))
+                    if (GetBoolean("\nChange Car Number?"))
                     {
                         newCarNumber = GetCarNumber(playerCrews);
                         currentEntrant.SetCarNumber(newCarNumber);
                     }
 
-                    if (GetBoolean("Change Class?"))
+                    if (GetBoolean("\nChange Class?"))
                     {
                         newClass = SelectClass(classList);
                         currentEntrant.SetClass(classList[newClass]);
-
+                        
                         newCarModel = SelectCarModel(newClass);
                         currentEntrant.SetCarModel(newCarModel);
                     }
 
-                    else if (GetBoolean("Change Car Model?"))
+                    else if (GetBoolean("\nChange Car Model?"))
                     {
                         newCarModel = SelectCarModel(newClass);
                         currentEntrant.SetCarModel(newCarModel);
@@ -429,7 +494,7 @@ namespace Console_Alpha_V1
 
             while (playerTeam.GetTeamEntries().Count() < maxCrews)
             {
-                if (GetBoolean("Create New Crew?"))
+                if (GetBoolean("\nCreate New Crew?"))
                 {
                     selectedClass = SelectClass(classList);
 
@@ -474,7 +539,7 @@ namespace Console_Alpha_V1
         {
             Console.Write("{0}\nY - Yes\nN - No\nChoice: ", outputString);
             string choice = Console.ReadLine().ToUpper();
-            Console.WriteLine();
+            //Console.WriteLine();
 
             if (choice == "Y" || choice == "YES")
             {
@@ -658,6 +723,74 @@ namespace Console_Alpha_V1
 
                     Console.WriteLine("Crew {0}: {1} {2} - {3} Overall / {4} In {5}", i + 1, currentEntrant.GetCarNo().PadRight(spacerList[0], ' '), currentEntrant.GetManufacturer().PadRight(spacerList[1], ' '), posString.PadRight(3, ' '), classPosString.PadRight(3, ' '), currentEntrant.GetClass().GetClassName());
                 }
+            }
+
+            Console.ReadLine();
+        }
+
+        private void DisplayLeaders(string outputString)
+        {
+            Console.WriteLine(outputString);
+
+            string className;
+            List<string> foundClasses = new List<string>();
+            List<int> leaderSpacers = new List<int>();
+
+            Entrant currentEntrant;
+            List<Entrant> classLeaders = new List<Entrant>();
+
+            for (int i = 0; i < entryList.Count(); i++)
+            {
+                currentEntrant = entryList[i];
+                className = currentEntrant.GetClass().GetClassName();
+
+                if (!foundClasses.Contains(className) && currentEntrant.GetRacing())
+                {
+                    foundClasses.Add(className);
+                    classLeaders.Add(currentEntrant);
+
+                    if (leaderSpacers.Count() == 0)
+                    {
+                        leaderSpacers.Add(className.Length);
+                        leaderSpacers.Add(currentEntrant.GetCarNo().Length);
+                        leaderSpacers.Add(currentEntrant.GetTeamName().Length);
+                        leaderSpacers.Add(currentEntrant.GetManufacturer().Length);
+                    }
+
+                    else
+                    {
+                        if (className.Length > leaderSpacers[0])
+                        {
+                            leaderSpacers[0] = className.Length;
+                        }
+
+                        if (currentEntrant.GetCarNo().Length > leaderSpacers[1])
+                        {
+                            leaderSpacers[1] = currentEntrant.GetCarNo().Length;
+                        }
+
+                        if (currentEntrant.GetTeamName().Length > leaderSpacers[2])
+                        {
+                            leaderSpacers[2] = currentEntrant.GetTeamName().Length;
+                        }
+
+                        if (currentEntrant.GetManufacturer().Length > leaderSpacers[3])
+                        {
+                            leaderSpacers[3] = currentEntrant.GetManufacturer().Length;
+                        }
+                    }
+                }
+            }
+
+            ClassIndexSort(classLeaders);
+
+            for (int i = 0; i < classLeaders.Count(); i++)
+            {
+                currentEntrant = classLeaders[i];
+
+                Console.WriteLine("{0}: {1} {2} - {3} - {4} Overall", currentEntrant.GetClass().GetClassName().PadRight(leaderSpacers[0], ' '),
+                    currentEntrant.GetCarNo().PadRight(leaderSpacers[1], ' '), currentEntrant.GetTeamName().PadRight(leaderSpacers[2], ' '),
+                    currentEntrant.GetManufacturer().PadRight(leaderSpacers[3], ' '), currentEntrant.GetCurrentPosition().Item1);
             }
 
             Console.ReadLine();
@@ -1481,7 +1614,8 @@ namespace Console_Alpha_V1
             List<Class> classList = chosenSeries.GetClassList();
 
             string folderPath = Path.Combine(currentRound.GetFolder(), "Post Race Standings"),
-                currentClassName = classList[0].GetClassName(), writeString = "",
+                currentClassName = classList[0].GetClassName(),
+                writeString = "Pos,Crew No,Team Name,Car Model,Points,,Best Result,,Results\n",
                 folderName = Path.Combine(folderPath, string.Format("Class 1 - {0}", currentClassName)),
                 fileName = Path.Combine(folderName, "Entrant Standings.csv");
 
@@ -1513,8 +1647,9 @@ namespace Console_Alpha_V1
                     Directory.CreateDirectory(folderName);
                 }
 
-                writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
-                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints());
+                writeString += string.Format("{0},{1},{2},{3},{4},,{5},,{6}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
+                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints(),
+                    currentEntrant.GetBestResultOutput(), currentEntrant.GetResultString());
             }
 
             FileHandler.WriteFile(writeString, fileName);
@@ -1526,7 +1661,8 @@ namespace Console_Alpha_V1
             List<Class> classList = chosenSeries.GetClassList();
 
             string folderPath = Path.Combine(CommonData.GetSeasonFolder(), "Final Standings"),
-                currentClassName = classList[0].GetClassName(), writeString = "",
+                currentClassName = classList[0].GetClassName(),
+                writeString = "Pos,Crew No,Team Name,Car Model,Points,,Best Result,,Results\n",
                 folderName = Path.Combine(folderPath, string.Format("Class 1 - {0}", currentClassName)),
                 fileName = Path.Combine(folderName, "Entrant Standings.csv");
 
@@ -1558,8 +1694,9 @@ namespace Console_Alpha_V1
                     Directory.CreateDirectory(folderName);
                 }
 
-                writeString += string.Format("{0},{1} {2},{3},{4}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
-                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints());
+                writeString += string.Format("{0},{1},{2},{3},{4},,{5},,{6}\n", currentEntrant.GetStandingsPosition(), currentEntrant.GetCarNo(),
+                    currentEntrant.GetTeamName(), currentEntrant.GetCarModel().GetModelName(), currentEntrant.GetPoints(),
+                    currentEntrant.GetBestResultOutput(), currentEntrant.GetResultString());
             }
 
             FileHandler.WriteFile(writeString, fileName);
@@ -1569,13 +1706,17 @@ namespace Console_Alpha_V1
         private void SaveManufacturersStandings(Class currentClass, string folderPath)
         {
             string filePath = Path.Combine(folderPath, "Manufacturer Standings.csv"),
-                writeString = "";
+                writeString = "Pos,Manufacturer,Points,,Best Result,,Results\n";
 
+            Manufacturer currentManufacturer;
             List<Manufacturer> manufacturerList = currentClass.GetManufacturerList();
 
             for (int i = 0; i < manufacturerList.Count(); i++)
             {
-                writeString += string.Format("P{0},{1},{2}\n", i + 1, manufacturerList[i].GetManufacturerName(), manufacturerList[i].GetPoints());
+                currentManufacturer = manufacturerList[i];
+
+                writeString += string.Format("P{0},{1},{2},,{3},,{4}\n", i + 1, currentManufacturer.GetManufacturerName(), currentManufacturer.GetPoints(),
+                    currentManufacturer.GetBestResultOutput(), currentManufacturer.GetResultsString());
             }
 
             FileHandler.WriteFile(writeString, filePath);

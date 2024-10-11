@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
 namespace Console_Alpha_V1
 {
@@ -11,9 +7,7 @@ namespace Console_Alpha_V1
         string carModelName, manufacturerName, platformName;
         int mainOVR, backupOVR, bopValue, reliability;
 
-        Class memberClass;
-
-        public CarModel(string cMN, string mN, string pN, int ovr, int bop, int r, Class mC)
+        public CarModel(string cMN, string mN, string pN, int ovr, int bop, int r)
         {
             carModelName = cMN;
             manufacturerName = mN;
@@ -24,8 +18,6 @@ namespace Console_Alpha_V1
             bopValue = bop;
 
             reliability = r;
-
-            memberClass = mC;
         }
 
         public CarModel() { }

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Console_Alpha_V1
 {
@@ -29,12 +28,13 @@ namespace Console_Alpha_V1
 
             enteredSeriesList = new List<Series>() { eS };
 
+            spacerList = new List<int>();
             SetSpacerList();
         }
 
         public void SetSpacerList()
         {
-            spacerList = new List<int>();
+            spacerList.Clear();
 
             foreach (Entrant newEntrant in crewList)
             {
@@ -252,5 +252,23 @@ namespace Console_Alpha_V1
             return (newOVR, newReliability);
         }
 
+        public void SaveTeamResults(int seasonNumber)
+        {
+            string fileName = Path.Combine(CommonData.GetSeasonFolder(), string.Format("Season {0} Results.csv", seasonNumber)),
+                writeString = string.Format("{0} - Season {1} Results\n", teamName, seasonNumber) + "Crew No,Car No,Model,Manufacturer,Position,Points,Best Result,,Results";
+
+            int crewIndex = 1;
+
+            foreach (Entrant currentEntrant in crewList)
+            {
+                writeString += string.Format("\nCrew {0},{1},{2},{3},{4},{5},{6},,{7}", crewIndex, currentEntrant.GetCarNo(), currentEntrant.GetCarModel().GetModelName(),
+                    currentEntrant.GetManufacturer(), currentEntrant.GetStandingsPosition(), currentEntrant.GetPoints(),
+                    currentEntrant.GetBestResultOutput(), currentEntrant.GetResultString());
+                
+                crewIndex++;
+            }
+
+            FileHandler.WriteFile(writeString, fileName);
+        }
     }
 }
