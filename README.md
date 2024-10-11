@@ -114,3 +114,10 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
   - FIXED Entrant Best Results being Updated even if Entrant wasn't Racing
   - FIXED Entrant Best Results not being Reset if Player makes no Team Changes
   - FIXED Class Names not being properly Spaced in Player Team Standings Output
+* V1.5.2
+  - Added Class Leaders
+  - Added Season Results to Standings Files
+    - For Entrants Standings
+    - For Manufacturers Standings (Best Finishing Car from said Manufacturer)
+    - For Player Team (Like Entrant Standings)
+  - Added Team Validation / Ability to Change Team Details after Team Creation, ahead of R1
