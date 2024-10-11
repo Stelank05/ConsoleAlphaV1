@@ -97,6 +97,7 @@ Ideally, its Download, Unzip, Plonk Somewhere, open Visual Studio, and hit F5.
   - Added Player Team/Crew Editing:
     - Players can now change their Team Name
     - Players can now Delete Crews
+    - Players can now Add New Crews
     - Players can now change the Number of a Crew Car 
     - Players can now change the Class of a Crew
     - Players can now change the Car Model of a Crew
